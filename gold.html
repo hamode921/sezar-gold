@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google" content="notranslate">
-    <title>GOLD TERMINAL V15.1</title>
+    <title>GOLD TERMINAL V15.3</title>
     <style>
         :root { --gold: #ffd700; --bg: #000; --red: #ff4d4d; --green: #00ff88; --neon: #00f2ff; }
         * { box-sizing: border-box; background-color: transparent !important; }
@@ -17,10 +17,10 @@
         .header-label { font-size: 15px; font-weight: bold; margin: 15px 0; display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
         .wall-row { display: flex; align-items: center; padding: 15px 5px; border-bottom: 1px solid #111; width: 100%; }
         .icon { font-size: 20px; width: 30px; }
-        .price-tag { font-family: monospace; font-size: 17px; font-weight: 500; margin-right: auto; }
-        .badge { background: #1a1500; color: var(--gold); border: 1px solid #443300; padding: 2px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; margin: 0 15px; }
-        .vol-tag { color: #fff; font-weight: bold; font-family: monospace; font-size: 17px; min-width: 90px; text-align: right; }
-        .signal-btn { width: 100%; padding: 22px; border-radius: 8px; text-align: center; font-weight: 900; font-size: 24px; margin-top: 30px; border: 2px solid #333; letter-spacing: 2px; transition: 0.5s; }
+        .price-tag { font-family: monospace; font-size: 18px; font-weight: bold; margin-right: auto; }
+        .badge { background: #1a1500; color: var(--gold); border: 1px solid #443300; padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; margin: 0 15px; }
+        .vol-tag { color: #fff; font-weight: bold; font-family: monospace; font-size: 17px; min-width: 95px; text-align: right; }
+        .signal-btn { width: 100%; padding: 22px; border-radius: 8px; text-align: center; font-weight: 900; font-size: 24px; margin-top: 30px; border: 2px solid #333; letter-spacing: 2px; }
         .bearish { background: rgba(255, 77, 77, 0.1) !important; color: var(--red); border-color: var(--red); }
         .bullish { background: rgba(0, 255, 136, 0.1) !important; color: var(--green); border-color: var(--green); }
     </style>
@@ -42,21 +42,19 @@
             <div id="sf" style="width: 50%; background: var(--red); transition: 1s;"></div>
         </div>
 
-        <div class="header-label" style="color:var(--red)">:SELL WALLS (30s) 🔴</div>
+        <div class="header-label" style="color:var(--red)">:SELL WALLS (STABLE) 🔴</div>
         <div id="sl"></div>
 
-        <div class="header-label" style="color:var(--green)">:BUY WALLS (30s) 🟢</div>
+        <div class="header-label" style="color:var(--green)">:BUY WALLS (STABLE) 🟢</div>
         <div id="bl"></div>
 
         <div id="sig" class="signal-btn">ANALYZING...</div>
     </div>
 
 <script class="notranslate">
-let sigHistory = [];
-
 async function start() {
     update();
-    setInterval(update, 3000); // زيادة وقت التحديث لـ 3 ثواني للاستقرار
+    setInterval(update, 3000); // تحديث كل 3 ثواني للاستقرار التام
 }
 
 function formatM(cash) {
@@ -70,12 +68,26 @@ async function update() {
         const d = await res.json();
         if(!d.bids) return;
 
-        const price = parseFloat(d.bids[0][0]);
-        document.getElementById('price').innerText = '$' + price.toFixed(2);
+        const currentPrice = parseFloat(d.bids[0][0]);
+        document.getElementById('price').innerText = '$' + currentPrice.toFixed(2);
 
+        // تجميع الطلبات (Grouping)
+        let buyMap = {}, sellMap = {};
         let bV = 0, sV = 0;
-        d.bids.forEach(b => bV += (parseFloat(b[0]) * parseFloat(b[1])));
-        d.asks.forEach(a => sV += (parseFloat(a[0]) * parseFloat(a[1])));
+
+        d.bids.forEach(b => {
+            let p = Math.floor(parseFloat(b[0])); // تقريب لأقرب دولار
+            let v = parseFloat(b[0]) * parseFloat(b[1]);
+            buyMap[p] = (buyMap[p] || 0) + v;
+            bV += v;
+        });
+
+        d.asks.forEach(a => {
+            let p = Math.ceil(parseFloat(a[0])); // تقريب لأقرب دولار
+            let v = parseFloat(a[0]) * parseFloat(a[1]);
+            sellMap[p] = (sellMap[p] || 0) + v;
+            sV += v;
+        });
 
         let total = bV + sV;
         if(total > 0) {
@@ -86,18 +98,11 @@ async function update() {
             document.getElementById('bf').style.width = bP + '%';
             document.getElementById('sf').style.width = sP + '%';
 
-            // منطق الإشارة المستقر (يأخذ متوسط آخر 3 تحديثات)
-            let currentSig = bV > sV ? 1 : -1;
-            sigHistory.push(currentSig);
-            if(sigHistory.length > 3) sigHistory.shift();
-            
-            let avgSig = sigHistory.reduce((a,b) => a+b, 0);
             const sig = document.getElementById('sig');
-
-            if (avgSig >= 2) {
+            if (bV > sV * 1.05) {
                 sig.innerText = "SIGNAL: BULLISH ●";
                 sig.className = "signal-btn bullish";
-            } else if (avgSig <= -2) {
+            } else if (sV > bV * 1.05) {
                 sig.innerText = "SIGNAL: BEARISH ●";
                 sig.className = "signal-btn bearish";
             } else {
@@ -106,24 +111,25 @@ async function update() {
             }
         }
 
-        render(d.asks, 'sl', '🎯', sV);
-        render(d.bids, 'bl', '🛡️', bV);
+        renderWalls(sellMap, 'sl', '🎯', sV);
+        renderWalls(buyMap, 'bl', '🛡️', bV);
 
     } catch(e) { console.log("Error", e); }
 }
 
-function render(arr, id, icon, sideTotal) {
+function renderWalls(map, id, icon, sideTotal) {
     const container = document.getElementById(id);
-    let top = arr.sort((a,b) => parseFloat(b[1]) - parseFloat(a[1])).slice(0, 3);
+    let sorted = Object.keys(map).map(p => ({p: p, v: map[p]}))
+                 .sort((a,b) => b.v - a.v).slice(0, 3);
+    
     let html = '';
-    top.forEach(o => {
-        let cash = parseFloat(o[0]) * parseFloat(o[1]);
-        let weight = ((cash/sideTotal)*100).toFixed(2);
+    sorted.forEach(o => {
+        let weight = ((o.v/sideTotal)*100).toFixed(2);
         html += '<div class="wall-row">' +
                 '<span class="icon">' + icon + '</span>' +
-                '<span class="price-tag">$' + parseFloat(o[0]).toFixed(1) + '</span>' +
+                '<span class="price-tag">$' + o.p + '.0</span>' +
                 '<span class="badge">' + weight + '%</span>' +
-                '<span class="vol-tag">Vol: ' + formatM(cash) + '</span>' +
+                '<span class="vol-tag">Vol: ' + formatM(o.v) + '</span>' +
                 '</div>';
     });
     container.innerHTML = html;
