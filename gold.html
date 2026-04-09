@@ -3,57 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GOLD MASTER V10.0</title>
+    <title>GOLD TERMINAL V11.0</title>
     <style>
         :root { --gold: #ffd700; --bg: #000; --red: #ff4d4d; --green: #00ff88; --neon: #00f2ff; }
-        * { box-sizing: border-box; background: #000 !important; color: #fff !important; }
-        body { font-family: 'Segoe UI', sans-serif; padding: 15px; margin: 0; display: flex; flex-direction: column; align-items: center; }
-        .main-container { width: 100%; max-width: 480px; border: 1px solid #222; padding: 20px; border-radius: 5px; }
-        .price-box { text-align: center; border: 1px dashed #444; padding: 30px; border-radius: 5px; margin-bottom: 25px; }
-        .price-val { font-size: 58px; color: var(--neon); font-weight: 900; letter-spacing: -1px; }
-        .ratio-bar { display: flex; justify-content: center; gap: 25px; font-size: 18px; font-weight: bold; margin-bottom: 12px; }
-        .meter-container { height: 12px; background: #111; border-radius: 10px; overflow: hidden; display: flex; margin-bottom: 30px; border: 1px solid #333; }
-        .section-label { font-size: 16px; font-weight: bold; margin: 15px 0; display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
-        .wall-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 8px; border-bottom: 1px solid #111; font-size: 16px; }
-        .perc-box { background: #1a1500; color: var(--gold); border: 1px solid #443300; padding: 3px 14px; border-radius: 20px; font-size: 13px; font-weight: bold; }
-        .vol-val { color: #fff; font-weight: bold; font-family: monospace; font-size: 17px; }
-        .signal-btn { width: 100%; padding: 22px; border-radius: 8px; text-align: center; font-weight: 900; font-size: 26px; margin-top: 35px; border: 2px solid #333; }
-        .bearish { color: var(--red); border-color: var(--red); box-shadow: inset 0 0 20px rgba(255, 77, 77, 0.2); }
-        .bullish { color: var(--green); border-color: var(--green); box-shadow: inset 0 0 20px rgba(0, 255, 136, 0.2); }
+        * { box-sizing: border-box; background-color: transparent !important; color-scheme: dark; }
+        body { background: #000 !important; color: #fff !important; font-family: 'Segoe UI', sans-serif; padding: 15px; margin: 0; display: flex; flex-direction: column; align-items: center; }
+        .container { width: 100%; max-width: 480px; }
+        
+        .price-card { text-align: center; border: 1px dashed #444; padding: 25px; border-radius: 10px; margin-bottom: 20px; }
+        .price-val { font-size: 55px; color: var(--neon); font-weight: 900; }
+
+        .ratio-bar { display: flex; justify-content: center; gap: 20px; font-size: 18px; font-weight: bold; margin-bottom: 10px; }
+        .meter { height: 10px; background: #111; border-radius: 10px; overflow: hidden; display: flex; margin-bottom: 30px; border: 1px solid #222; }
+        
+        .list-title { font-size: 15px; font-weight: bold; margin: 15px 0; display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+        .row { display: flex; justify-content: space-between; align-items: center; padding: 15px 8px; border-bottom: 1px solid #111; }
+        .perc { background: #1a1500; color: var(--gold); border: 1px solid #443300; padding: 2px 10px; border-radius: 15px; font-size: 12px; font-weight: bold; }
+        .vol { color: #fff; font-weight: bold; font-family: monospace; font-size: 17px; }
+
+        .sig-box { width: 100%; padding: 22px; border-radius: 10px; text-align: center; font-weight: 900; font-size: 24px; margin-top: 30px; border: 2px solid #333; }
+        .bear { background: rgba(255, 77, 77, 0.1) !important; color: var(--red); border-color: var(--red); }
+        .bull { background: rgba(0, 255, 136, 0.1) !important; color: var(--green); border-color: var(--green); }
     </style>
 </head>
-<body onload="startSystem()">
+<body onload="start()">
 
-    <div class="main-container">
-        <div class="price-box">
-            <div class="price-val" id="price">$0.00</div>
-        </div>
+    <div class="container">
+        <div class="price-card"><div class="price-val" id="price">$0.00</div></div>
 
         <div class="ratio-bar">
-            <span style="color:var(--green)">BUY: <span id="b-p">50.0</span>%</span>
+            <span style="color:var(--green)">BUY: <span id="bp">50</span>%</span>
             <span>|</span>
-            <span style="color:var(--red)">SELL: <span id="s-p">50.0</span>%</span>
+            <span style="color:var(--red)">SELL: <span id="sp">50</span>%</span>
         </div>
-        <div class="meter-container">
-            <div id="b-fill" style="width: 50%; background: var(--green);"></div>
-            <div id="s-fill" style="width: 50%; background: var(--red);"></div>
+        <div class="meter">
+            <div id="bf" style="width: 50%; background: var(--green);"></div>
+            <div id="sf" style="width: 50%; background: var(--red);"></div>
         </div>
 
-        <div class="section-label" style="color:var(--red)">:SELL WALLS (30s) 🔴</div>
-        <div id="sell-list"></div>
+        <div class="list-title" style="color:var(--red)">:SELL WALLS (30s) 🔴</div>
+        <div id="sl"></div>
 
-        <div class="section-header" style="height:20px"></div>
+        <div class="list-title" style="color:var(--green)">:BUY WALLS (30s) 🟢</div>
+        <div id="bl"></div>
 
-        <div class="section-label" style="color:var(--green)">:BUY WALLS (30s) 🟢</div>
-        <div id="buy-list"></div>
-
-        <div id="signal" class="signal-btn">ANALYZING MARKET...</div>
+        <div id="sig" class="sig-box">SCANNING...</div>
     </div>
 
     <script>
-        async function startSystem() {
+        async function start() {
             update();
-            setInterval(update, 1500);
+            setInterval(update, 2000);
         }
 
         async function update() {
@@ -64,48 +64,51 @@
                 const p = parseFloat(d.bids[0][0]);
                 document.getElementById('price').innerText = `$${p.toFixed(2)}`;
 
-                // محرك "تضخيم السيولة" ليعكس حجم السوق العالمي الحقيقي
-                let bV = d.bids.reduce((a, b) => a + (parseFloat(b[0])*parseFloat(b[1])), 0) * 12; 
-                let sV = d.asks.reduce((a, b) => a + (parseFloat(a[0])*parseFloat(a[1])), 0) * 12;
+                // حساب السيولة مع حماية من الـ NaN
+                let bV = 0, sV = 0;
+                d.bids.forEach(b => bV += (parseFloat(b[0]) * parseFloat(b[1])));
+                d.asks.forEach(a => sV += (parseFloat(a[0]) * parseFloat(a[1])));
+                
                 let total = bV + sV;
+                if(total > 0) {
+                    let bP = ((bV/total)*100).toFixed(1);
+                    let sP = ((sV/total)*100).toFixed(1);
+                    document.getElementById('bp').innerText = bP;
+                    document.getElementById('sp').innerText = sP;
+                    document.getElementById('bf').style.width = bP + "%";
+                    document.getElementById('sf').style.width = sP + "%";
 
-                let bP = (bV/total*100).toFixed(1);
-                let sP = (sV/total*100).toFixed(1);
-
-                document.getElementById('b-p').innerText = bP;
-                document.getElementById('s-p').innerText = sP;
-                document.getElementById('b-fill').style.width = bP + "%";
-                document.getElementById('s-fill').style.width = sP + "%";
-
-                const sig = document.getElementById('signal');
-                if(sV > bV * 1.05) {
-                    sig.innerText = "SIGNAL: BEARISH ●"; sig.className = "signal-btn bearish";
-                } else {
-                    sig.innerText = "SIGNAL: BULLISH ●"; sig.className = "signal-btn bullish";
+                    const sig = document.getElementById('sig');
+                    if(sV > bV) {
+                        sig.innerText = "SIGNAL: BEARISH ●"; sig.className = "sig-box bear";
+                    } else {
+                        sig.innerText = "SIGNAL: BULLISH ●"; sig.className = "sig-box bull";
+                    }
                 }
 
-                render(d.asks, 'sell-list', '🎯', sV, 12);
-                render(d.bids, 'buy-list', '🛡️', bV, 12);
+                render(d.asks, 'sl', '🎯', sV);
+                render(d.bids, 'bl', '🛡️', bV);
             } catch(e) {}
         }
 
-        function render(arr, id, icon, sideTotal, boost) {
-            const out = document.getElementById(id);
-            let top = arr.sort((a,b) => b[1]-a[1]).slice(0, 3);
+        function render(arr, id, icon, sideTotal) {
+            const container = document.getElementById(id);
+            let top = arr.sort((a,b) => (parseFloat(b[1])) - (parseFloat(a[1]))).slice(0, 3);
             let html = '';
             top.forEach(o => {
-                let cash = (parseFloat(o[0]) * parseFloat(o[1])) * boost;
-                let weight = (cash/sideTotal*100).toFixed(2);
+                let cash = parseFloat(o[0]) * parseFloat(o[1]);
+                let weight = sideTotal > 0 ? ((cash/sideTotal)*100).toFixed(2) : "0.00";
+                let volStr = cash >= 1000000 ? (cash/1000000).toFixed(2) + "M" : (cash/1000).toFixed(1) + "M"; // خليناها دايماً تطلع M مثل البتكوين
                 html += `
-                    <div class="wall-row">
-                        <span style="font-size:22px;">${icon}</span>
+                    <div class="row">
+                        <span style="font-size:20px;">${icon}</span>
                         <span style="font-family:monospace;">$${parseFloat(o[0]).toFixed(1)}</span>
-                        <span class="perc-box">${weight}%</span>
-                        <span class="vol-val">Vol: ${(cash/1000000).toFixed(2)}M</span>
+                        <span class="perc">${weight}%</span>
+                        <span class="vol">Vol: ${ (cash/1000000).toFixed(2) }M</span>
                     </div>
                 `;
             });
-            out.innerHTML = html;
+            container.innerHTML = html;
         }
     </script>
 </body>
