@@ -3,76 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GOLD RADAR V1.4 | سيزار</title>
+    <title>GOLD RADAR V1.5 | سيزار</title>
     <style>
-        :root { --gold: #ffd700; --bg: #000; --neon: #00f2ff; }
-        body { background: var(--bg); color: #fff; font-family: 'Courier New', monospace; padding: 10px; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
-        .sezar-box { border: 2px solid var(--gold); background: #080808; width: 95%; max-width: 450px; padding: 25px; border-radius: 25px; text-align: center; box-shadow: 0 0 30px rgba(255,215,0,0.2); }
-        .price { font-size: 50px; color: var(--neon); font-weight: bold; margin: 15px 0; text-shadow: 0 0 15px var(--neon); }
-        .status { font-size: 13px; color: var(--gold); border: 1px solid #333; padding: 6px 18px; border-radius: 50px; display: inline-block; background: #111; }
-        #log { width: 95%; max-width: 450px; height: 100px; background: #050505; border: 1px solid #222; margin-top: 20px; padding: 10px; font-size: 10px; color: #555; overflow-y: auto; border-radius: 12px; text-align: left; }
+        :root { --gold: #ffd700; --bg: #000; --neon: #00f2ff; --red: #ff4d4d; --green: #00ff88; }
+        body { background: var(--bg); color: #fff; font-family: 'Courier New', monospace; padding: 10px; margin: 0; display: flex; flex-direction: column; align-items: center; }
+        .sezar-box { border: 2px solid var(--gold); background: #080808; width: 95%; max-width: 450px; padding: 20px; border-radius: 20px; text-align: center; box-shadow: 0 0 25px rgba(255,215,0,0.2); margin-bottom: 15px; }
+        .price { font-size: 45px; color: var(--neon); font-weight: bold; margin: 10px 0; }
+        .whale-box { background: #0a0a0a; width: 95%; max-width: 450px; border-radius: 15px; border: 1px solid #222; padding: 15px; box-sizing: border-box; }
+        .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #111; font-size: 13px; }
+        .pressure-bar { width: 100%; height: 10px; background: #222; border-radius: 5px; margin: 10px 0; overflow: hidden; display: flex; }
+        #buy-bar { height: 100%; background: var(--green); transition: 0.5s; }
+        #sell-bar { height: 100%; background: var(--red); transition: 0.5s; }
     </style>
 </head>
 <body onload="powerOn()">
 
     <div class="sezar-box">
-        <h2 style="margin:0; font-size: 22px; color:var(--gold);">🔱 GOLD RADAR V1.4 🔱</h2>
-        <p style="font-size: 11px; opacity: 0.6; color: #aaa;">نظام تتبع الذهب المباشر (PAXG/USDT)</p>
-        <div class="price" id="p">CONNECT..</div>
-        <div class="status" id="s">جاري الربط بنبض بايننس...</div>
+        <h2 style="margin:0; font-size: 18px; color:var(--gold);">🔱 GOLD RADAR V1.5 🔱</h2>
+        <div class="price" id="p">0.00</div>
+        <div id="p-change" style="font-size: 12px; margin-bottom: 10px;">--</div>
+        
+        <div style="font-size: 10px; color: #666;">ميزان القوة (شراء vs بيع)</div>
+        <div class="pressure-bar">
+            <div id="buy-bar" style="width: 50%;"></div>
+            <div id="sell-bar" style="width: 50%;"></div>
+        </div>
     </div>
 
-    <div id="log"></div>
+    <div class="whale-box">
+        <div style="text-align: center; color: var(--gold); font-size: 12px; margin-bottom: 10px;">📡 رادار السيولة اللحظية</div>
+        <div id="whale-output"></div>
+    </div>
 
     <script>
-        // استخدام رمز PAXG لأنه البديل الرسمي للذهب في بايننس
-        const socketURL = "wss://stream.binance.com:9443/ws/paxgusdt@ticker";
-        let ws;
+        const priceWS = "wss://stream.binance.com:9443/ws/paxgusdt@ticker";
+        const depthWS = "wss://stream.binance.com:9443/ws/paxgusdt@depth5"; // سحب أفضل 5 مستويات سيولة
 
         function powerOn() {
-            addLog("سيزار.. جاري استدعاء بيانات الذهب من بايننس...");
-            connect();
+            connectPrice();
+            connectWhales();
         }
 
-        function connect() {
-            ws = new WebSocket(socketURL);
-            
-            ws.onopen = () => {
-                addLog("✅ تم الاتصال بنجاح! الرادار يعمل الآن.");
-                document.getElementById('s').innerText = "متصل بالسيولة اللحظية";
+        function connectPrice() {
+            let ws = new WebSocket(priceWS);
+            ws.onmessage = (e) => {
+                const d = JSON.parse(e.data);
+                document.getElementById('p').innerText = `$${parseFloat(d.c).toFixed(2)}`;
+                const change = parseFloat(d.P).toFixed(2);
+                const el = document.getElementById('p-change');
+                el.innerText = (change >= 0 ? "▲ " : "▼ ") + change + "%";
+                el.style.color = change >= 0 ? "var(--green)" : "var(--red)";
             };
+        }
 
-            ws.onmessage = (evt) => {
-                const data = JSON.parse(evt.data);
-                // جلب السعر الحالي
-                const price = parseFloat(data.c).toFixed(2);
-                document.getElementById('p').innerText = `$${price}`;
+        function connectWhales() {
+            let ws = new WebSocket(depthWS);
+            ws.onmessage = (e) => {
+                const d = JSON.parse(e.data);
+                let buyVol = d.b.reduce((a, b) => a + parseFloat(b[1]), 0);
+                let sellVol = d.a.reduce((a, b) => a + parseFloat(b[1]), 0);
                 
-                // تحليل نسبة التغيير اليومي
-                const change = parseFloat(data.P).toFixed(2);
-                if(change >= 0) {
-                    document.getElementById('p').style.color = "#00ff88";
-                    document.getElementById('s').innerText = "🔥 صعود: " + change + "%";
-                } else {
-                    document.getElementById('p').style.color = "#ff4d4d";
-                    document.getElementById('s').innerText = "❄️ هبوط: " + change + "%";
-                }
-            };
+                // تحديث ميزان القوة
+                let total = buyVol + sellVol;
+                document.getElementById('buy-bar').style.width = (buyVol/total * 100) + "%";
+                document.getElementById('sell-bar').style.width = (sellVol/total * 100) + "%";
 
-            ws.onerror = (e) => {
-                addLog("⚠️ خطأ في الاتصال.. جاري المحاولة مرة أخرى.");
-                setTimeout(connect, 3000);
+                // تحديث قائمة السيولة
+                const out = document.getElementById('whale-output');
+                out.innerHTML = "";
+                d.b.slice(0, 3).forEach(b => {
+                    out.innerHTML += `<div class="row"><span style="color:var(--green)">BUY</span><span>$${parseFloat(b[0]).toFixed(2)}</span><span style="color:var(--gold)">${parseFloat(b[1]).toFixed(2)} Oz</span></div>`;
+                });
+                d.a.slice(0, 3).forEach(a => {
+                    out.innerHTML += `<div class="row"><span style="color:var(--red)">SELL</span><span>$${parseFloat(a[0]).toFixed(2)}</span><span style="color:var(--gold)">${parseFloat(a[1]).toFixed(2)} Oz</span></div>`;
+                });
             };
-
-            ws.onclose = () => {
-                addLog("🔌 انقطع النبض.. جاري إعادة الربط التلقائي.");
-                setTimeout(connect, 3000);
-            };
-        }
-
-        function addLog(m) {
-            const l = document.getElementById('log');
-            l.innerHTML = `> [${new Date().toLocaleTimeString()}] ${m}<br>` + l.innerHTML;
         }
     </script>
 </body>
