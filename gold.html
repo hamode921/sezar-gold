@@ -3,80 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GOLD ALPHA V3.0 | السيولة العالمية</title>
+    <title>GOLD TERMINAL V4.0</title>
     <style>
-        :root { --gold: #ffd700; --bg: #030303; --neon: #00f2ff; --red: #ff4d4d; --green: #00ff88; }
+        :root { --gold: #ffd700; --bg: #030303; --card: #0a0a0a; --red: #ff4d4d; --green: #00ff88; }
         body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; padding: 10px; margin: 0; display: flex; flex-direction: column; align-items: center; }
-        .alpha-frame { border: 2px solid var(--gold); background: linear-gradient(145deg, #0a0a0a, #000); width: 95%; max-width: 480px; padding: 25px; border-radius: 25px; text-align: center; box-shadow: 0 0 30px rgba(255,215,0,0.15); margin-bottom: 20px; }
-        .global-price { font-size: 52px; color: var(--neon); font-weight: 900; letter-spacing: -2px; margin: 5px 0; }
-        .whale-terminal { background: #080808; width: 95%; max-width: 480px; border-radius: 20px; border: 1px solid #1a1a1a; padding: 15px; box-sizing: border-box; overflow: hidden; }
-        .order-row { display: flex; justify-content: space-between; padding: 15px 10px; border-bottom: 1px solid #111; font-size: 16px; align-items: center; transition: 0.3s; }
-        .order-row:hover { background: #111; }
-        .big-money { color: var(--gold); font-weight: 800; font-family: 'Courier New', monospace; font-size: 20px; text-shadow: 0 0 10px rgba(255,215,0,0.3); }
-        .alert-pulse { font-size: 12px; color: var(--gold); animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+        .main-container { width: 100%; max-width: 480px; border: 1px dashed #333; padding: 15px; border-radius: 20px; }
+        .price-box { text-align: center; margin: 20px 0; }
+        .price-val { font-size: 55px; color: #00f2ff; font-weight: 900; letter-spacing: -2px; }
+        .meter-container { background: #111; height: 35px; border-radius: 10px; margin: 20px 0; position: relative; overflow: hidden; display: flex; }
+        .meter-fill { height: 100%; transition: 1s ease-in-out; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; }
+        .section-title { font-size: 14px; color: #777; margin: 20px 0 10px; text-align: center; border-bottom: 1px solid #222; padding-bottom: 5px; }
+        .wall-row { display: flex; justify-content: space-between; padding: 12px 10px; background: var(--card); border-radius: 8px; margin-bottom: 8px; align-items: center; font-size: 14px; border: 1px solid #1a1a1a; }
+        .perc-tag { background: rgba(255, 215, 0, 0.1); color: var(--gold); padding: 2px 8px; border-radius: 15px; font-size: 11px; border: 1px solid var(--gold); }
+        .signal-btn { width: 100%; padding: 20px; border-radius: 15px; text-align: center; font-weight: 900; font-size: 20px; letter-spacing: 2px; margin-top: 20px; text-transform: uppercase; }
+        .bearish { background: rgba(255, 77, 77, 0.2); color: var(--red); border: 2px solid var(--red); }
+        .bullish { background: rgba(0, 255, 136, 0.2); color: var(--green); border: 2px solid var(--green); }
     </style>
 </head>
-<body onload="igniteRadar()">
+<body onload="launchTerminal()">
 
-    <div class="alpha-frame">
-        <div class="alert-pulse">● رادار السيولة العالمية مفعل</div>
-        <div class="global-price" id="main-p">0.00</div>
-        <div id="market-bias" style="font-size: 14px; font-weight: bold; margin-top: 10px;">جاري تحليل الضغط...</div>
-    </div>
+    <div class="main-container">
+        <div class="price-box">
+            <div class="price-val" id="price">$0.00</div>
+        </div>
 
-    <div class="whale-terminal">
-        <div style="text-align:center; color:#444; font-size:11px; margin-bottom:15px; letter-spacing: 1px;">أوامر الحيتان المصفاة (+50K)</div>
-        <div id="filtered-orders"></div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px;">
+            <span style="color:var(--green)">شراء: <span id="buy-p">0</span>%</span>
+            <span style="color:var(--red)">بيع: <span id="sell-p">0</span>%</span>
+        </div>
+        <div class="meter-container">
+            <div id="buy-fill" class="meter-fill" style="background: linear-gradient(to right, #00331a, #00ff88); width: 50%;"></div>
+            <div id="sell-fill" class="meter-fill" style="background: linear-gradient(to left, #330000, #ff4d4d); width: 50%;"></div>
+        </div>
+
+        <div class="section-title" style="color:var(--red)">● SELL WALLS (ACTIVE)</div>
+        <div id="sell-walls"></div>
+
+        <div class="section-title" style="color:var(--green)">● BUY WALLS (ACTIVE)</div>
+        <div id="buy-walls"></div>
+
+        <div id="signal-box" class="signal-btn">WAITING FOR DATA...</div>
     </div>
 
     <script>
-        async function igniteRadar() {
-            updateAlpha();
-            setInterval(updateAlpha, 1500);
+        async function launchTerminal() {
+            updateRadar();
+            setInterval(updateRadar, 2000);
         }
 
-        async function updateAlpha() {
+        async function updateRadar() {
             try {
-                // سحب بيانات عمق السوق من بايننس
                 const res = await fetch('https://api.binance.com/api/v3/depth?symbol=PAXGUSDT&limit=100');
                 const data = await res.json();
                 
-                const currentPrice = parseFloat(data.bids[0][0]);
-                document.getElementById('main-p').innerText = `$${currentPrice.toFixed(2)}`;
+                const p = parseFloat(data.bids[0][0]);
+                document.getElementById('price').innerText = `$${p.toFixed(2)}`;
 
-                // تحليل ذكي لضغط السوق
-                let bVol = data.bids.reduce((a, b) => a + parseFloat(b[1]), 0);
-                let aVol = data.asks.reduce((a, b) => a + parseFloat(b[1]), 0);
-                const bias = document.getElementById('market-bias');
-                if(bVol > aVol * 1.2) {
-                    bias.innerText = "🔱 ضغط شراء حيتان (صعود)"; bias.style.color = "var(--green)";
-                } else if(aVol > bVol * 1.2) {
-                    bias.innerText = "🛑 ضغط بيع حيتان (هبوط)"; bias.style.color = "var(--red)";
+                let bVol = data.bids.reduce((acc, curr) => acc + (parseFloat(curr[0]) * parseFloat(curr[1])), 0);
+                let sVol = data.asks.reduce((acc, curr) => acc + (parseFloat(curr[0]) * parseFloat(curr[1])), 0);
+                let total = bVol + sVol;
+                
+                let bPerc = (bVol/total * 100).toFixed(1);
+                let sPerc = (sVol/total * 100).toFixed(1);
+
+                document.getElementById('buy-p').innerText = bPerc;
+                document.getElementById('sell-p').innerText = sPerc;
+                document.getElementById('buy-fill').style.width = bPerc + "%";
+                document.getElementById('sell-fill').style.width = sPerc + "%";
+
+                // تحديث الـ Signal
+                const sig = document.getElementById('signal-box');
+                if(sVol > bVol * 1.1) {
+                    sig.innerText = "SIGNAL: BEARISH ●"; sig.className = "signal-btn bearish";
                 } else {
-                    bias.innerText = "⚖️ توازن سيولة (تذبذب)"; bias.style.color = "#888";
+                    sig.innerText = "SIGNAL: BULLISH ●"; sig.className = "signal-btn bullish";
                 }
 
-                // تصفية الأوامر الضخمة فقط
-                const out = document.getElementById('filtered-orders');
-                let combined = [
-                    ...data.asks.map(a => ({p: a[0], v: parseFloat(a[0])*parseFloat(a[1]), t: 'SELL'})),
-                    ...data.bids.map(b => ({p: b[0], v: parseFloat(b[0])*parseFloat(b[1]), t: 'BUY'}))
-                ].filter(o => o.v >= 50000).sort((a, b) => b.v - a.v).slice(0, 6);
+                // دالة عرض الجدران
+                renderWalls(data.asks, 'sell-walls', 'SELL', 'var(--red)', sVol);
+                renderWalls(data.bids, 'buy-walls', 'BUY', 'var(--green)', bVol);
 
-                let html = '';
-                combined.forEach(o => {
-                    let formattedV = o.v >= 1000000 ? (o.v/1000000).toFixed(2) + "M" : (o.v/1000).toFixed(0) + "K";
-                    html += `
-                        <div class="order-row">
-                            <span style="color:${o.t==='BUY'?'var(--green)':'var(--red)'}; font-weight:bold;">${o.t}</span>
-                            <span style="font-family:monospace;">$${parseFloat(o.p).toFixed(2)}</span>
-                            <span class="big-money">$${formattedV}</span>
-                        </div>
-                    `;
-                });
-                out.innerHTML = html || '<p style="text-align:center; color:#333;">لا يوجد حيتان ثقيلة حالياً</p>';
             } catch (e) {}
+        }
+
+        function renderWalls(arr, elementId, type, color, totalSideVol) {
+            const out = document.getElementById(elementId);
+            let top = arr.sort((a, b) => b[1] - a[1]).slice(0, 3);
+            let html = '';
+            top.forEach(o => {
+                let cash = parseFloat(o[0]) * parseFloat(o[1]);
+                let weight = ((cash/totalSideVol) * 100).toFixed(2);
+                let val = cash >= 1000000 ? (cash/1000000).toFixed(2) + "M" : (cash/1000).toFixed(2) + "M"; 
+                // المليون بالذهب يظهر أحياناً كـ 1M أو كسور
+                html += `
+                    <div class="wall-row">
+                        <span style="color:${color}; font-weight:bold;">${type}</span>
+                        <span style="font-family:monospace;">$${parseFloat(o[0]).toFixed(2)}</span>
+                        <span class="perc-tag">${weight}%</span>
+                        <span style="color:var(--gold); font-weight:bold;">Vol: $${(cash/1000000).toFixed(2)}M</span>
+                    </div>
+                `;
+            });
+            out.innerHTML = html;
         }
     </script>
 </body>
