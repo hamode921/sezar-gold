@@ -3,69 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GOLD RADAR V1.6 | سيزار</title>
+    <title>GOLD RADAR V1.7 | سيزار</title>
     <style>
         :root { --gold: #ffd700; --bg: #000; --neon: #00f2ff; --red: #ff4d4d; --green: #00ff88; }
-        body { background: var(--bg); color: #fff; font-family: 'Courier New', monospace; padding: 10px; margin: 0; display: flex; flex-direction: column; align-items: center; }
-        .sezar-box { border: 2px solid var(--gold); background: #080808; width: 95%; max-width: 450px; padding: 20px; border-radius: 20px; text-align: center; box-shadow: 0 0 25px rgba(255,215,0,0.2); margin-bottom: 15px; }
+        body { background: var(--bg); color: #fff; font-family: sans-serif; padding: 10px; margin: 0; display: flex; flex-direction: column; align-items: center; }
+        .sezar-box { border: 2px solid var(--gold); background: #080808; width: 95%; max-width: 450px; padding: 20px; border-radius: 20px; text-align: center; margin-bottom: 15px; }
         .price { font-size: 45px; color: var(--neon); font-weight: bold; margin: 10px 0; }
         .pressure-bar { width: 100%; height: 12px; background: #222; border-radius: 6px; margin: 15px 0; overflow: hidden; display: flex; border: 1px solid #333; }
-        .whale-card { background: #0a0a0a; width: 95%; max-width: 450px; border-radius: 15px; border: 1px solid #222; padding: 15px; box-sizing: border-box; }
-        .wall-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #111; font-size: 14px; align-items: center; }
-        .vol-tag { background: #111; padding: 2px 8px; border-radius: 4px; color: var(--gold); font-weight: bold; }
+        .whale-card { background: #0a0a0a; width: 95%; max-width: 450px; border-radius: 15px; border: 1px solid #222; padding: 15px; box-sizing: border-box; min-height: 200px; }
+        .wall-row { display: flex; justify-content: space-between; padding: 12px 5px; border-bottom: 1px solid #111; font-size: 14px; }
+        .vol-tag { color: var(--gold); font-weight: bold; font-family: monospace; }
     </style>
 </head>
 <body onload="powerOn()">
 
     <div class="sezar-box">
-        <h2 style="margin:0; font-size: 18px; color:var(--gold);">🔱 جدران حيتان الذهب 🔱</h2>
-        <div class="price" id="p">$4729.68</div>
-        <div style="font-size: 11px; color: #555;">ميزان السيولة اللحظي</div>
+        <h2 style="margin:0; font-size: 18px; color:var(--gold);">🔱 رادار جدران الذهب 🔱</h2>
+        <div class="price" id="p">جاري الربط..</div>
         <div class="pressure-bar">
-            <div id="buy-bar" style="width: 50%; background: var(--green); transition: 0.5s;"></div>
-            <div id="sell-bar" style="width: 50%; background: var(--red); transition: 0.5s;"></div>
+            <div id="buy-bar" style="width: 50%; background: var(--green); transition: 1s;"></div>
+            <div id="sell-bar" style="width: 50%; background: var(--red); transition: 1s;"></div>
         </div>
     </div>
 
-    <div class="whale-card">
-        <div style="text-align: center; color: var(--gold); font-size: 12px; margin-bottom: 12px; border-bottom: 1px solid #333; padding-bottom: 5px;">🔥 أضخم جدران البيع والشراء الحالية</div>
-        <div id="walls-output"></div>
+    <div class="whale-card" id="walls-output">
+        <p style="text-align:center; color:#555;">بانتظار وصول جدران الحيتان...</p>
     </div>
 
     <script>
-        const wsUrl = "wss://stream.binance.com:9443/ws/paxgusdt@depth20@100ms"; // سرعة 100 ملي ثانية وعمق 20
-
         function powerOn() {
-            let ws = new WebSocket(wsUrl);
+            // استخدام التحديث العادي لضمان الاستقرار على الموبايل
+            const ws = new WebSocket("wss://stream.binance.com:9443/ws/paxgusdt@depth20");
+
             ws.onmessage = (e) => {
                 const d = JSON.parse(e.data);
                 
-                // 1. تحديث السعر (تقريبي من عمق الطلبات)
-                document.getElementById('p').innerText = `$${parseFloat(d.b[0][0]).toFixed(2)}`;
+                // تحديث السعر من أول طلب شراء
+                const currentPrice = parseFloat(d.b[0][0]).toFixed(2);
+                document.getElementById('p').innerText = `$${currentPrice}`;
 
-                // 2. حساب ميزان القوة
+                // حساب ميزان السيولة
                 let bVol = d.b.reduce((a, b) => a + parseFloat(b[1]), 0);
                 let aVol = d.a.reduce((a, b) => a + parseFloat(b[1]), 0);
                 let total = bVol + aVol;
                 document.getElementById('buy-bar').style.width = (bVol/total * 100) + "%";
                 document.getElementById('sell-bar').style.width = (aVol/total * 100) + "%";
 
-                // 3. عرض أضخم 3 جدران شراء وأضخم 3 جدران بيع
+                // عرض الجدران
                 const out = document.getElementById('walls-output');
-                out.innerHTML = "";
+                let html = '<div style="text-align:center; color:var(--gold); font-size:12px; margin-bottom:10px;">🔥 أضخم السيولة الحالية</div>';
                 
-                // فرز أضخم الجدران
-                let topBids = d.b.sort((a, b) => b[1] - a[1]).slice(0, 3);
-                let topAsks = d.a.sort((a, b) => b[1] - a[1]).slice(0, 3);
-
+                // جدران البيع (أعلى 3 كميات)
+                const topAsks = d.a.sort((a, b) => b[1] - a[1]).slice(0, 3);
                 topAsks.forEach(a => {
-                    out.innerHTML += `<div class="wall-row"><span style="color:var(--red)">SELL WALL</span><span>$${parseFloat(a[0]).toFixed(2)}</span><span class="vol-tag">${parseFloat(a[1]).toFixed(1)} Oz</span></div>`;
+                    html += `<div class="wall-row"><span style="color:var(--red)">بيـع</span><span>$${parseFloat(a[0]).toFixed(2)}</span><span class="vol-tag">${parseFloat(a[1]).toFixed(1)} أونصة</span></div>`;
                 });
-                out.innerHTML += `<div style="height:1px; background:#222; margin:10px 0;"></div>`;
+
+                html += `<div style="height:1px; background:#333; margin:10px 0;"></div>`;
+
+                // جدران الشراء (أعلى 3 كميات)
+                const topBids = d.b.sort((a, b) => b[1] - a[1]).slice(0, 3);
                 topBids.forEach(b => {
-                    out.innerHTML += `<div class="wall-row"><span style="color:var(--green)">BUY WALL</span><span>$${parseFloat(b[0]).toFixed(2)}</span><span class="vol-tag">${parseFloat(b[1]).toFixed(1)} Oz</span></div>`;
+                    html += `<div class="wall-row"><span style="color:var(--green)">شراء</span><span>$${parseFloat(b[0]).toFixed(2)}</span><span class="vol-tag">${parseFloat(b[1]).toFixed(1)} أونصة</span></div>`;
                 });
+
+                out.innerHTML = html;
             };
+
+            ws.onclose = () => setTimeout(powerOn, 3000);
         }
     </script>
 </body>
