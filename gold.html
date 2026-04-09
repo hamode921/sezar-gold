@@ -3,105 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GOLD BLACK-OPS V5.0</title>
+    <title>GOLD TERMINAL V5.1 | جدران الحيتان</title>
     <style>
-        :root { --gold: #ffd700; --bg: #000; --neon: #00f2ff; --red: #ff3333; --green: #00ff66; }
-        body { background: var(--bg); color: #fff; font-family: 'Consolas', monospace; padding: 10px; margin: 0; display: flex; flex-direction: column; align-items: center; }
-        .terminal-frame { width: 100%; max-width: 480px; border: 2px solid #1a1a1a; padding: 20px; border-radius: 5px; background: linear-gradient(180deg, #050505 0%, #000 100%); position: relative; }
-        .price-display { text-align: center; font-size: 60px; color: var(--neon); font-weight: bold; text-shadow: 0 0 20px rgba(0, 242, 255, 0.4); margin-bottom: 5px; }
-        .pulse-indicator { height: 4px; width: 100%; background: #111; margin-bottom: 20px; position: relative; }
-        #pulse-bar { height: 100%; width: 0%; background: var(--neon); transition: 0.2s; box-shadow: 0 0 10px var(--neon); }
-        .wall-box { background: rgba(10, 10, 10, 0.8); border: 1px solid #1a1a1a; margin-bottom: 10px; padding: 12px; border-right: 4px solid var(--red); }
-        .buy-wall { border-right: 0; border-left: 4px solid var(--green); }
-        .row-data { display: flex; justify-content: space-between; font-size: 14px; margin: 5px 0; }
-        .trap-warning { background: #4a0000; color: #ff9999; font-size: 10px; padding: 2px 10px; border-radius: 3px; display: none; animation: blink 0.5s infinite; }
-        .signal-master { width: 100%; padding: 25px; margin-top: 15px; border-radius: 4px; text-align: center; font-size: 24px; font-weight: 900; border: 1px solid #333; }
-        .bullish-ops { background: #002200; color: var(--green); border: 1px solid var(--green); box-shadow: inset 0 0 20px #004400; }
-        .bearish-ops { background: #220000; color: var(--red); border: 1px solid var(--red); box-shadow: inset 0 0 20px #440000; }
-        @keyframes blink { 50% { opacity: 0; } }
+        :root { --gold: #ffd700; --bg: #030303; --red: #ff3333; --green: #00ff66; --neon: #00f2ff; }
+        body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; padding: 10px; margin: 0; display: flex; flex-direction: column; align-items: center; }
+        .main-container { width: 100%; max-width: 480px; border-radius: 20px; padding: 10px; }
+        .price-val { font-size: 55px; color: var(--neon); font-weight: 900; text-align: center; margin: 20px 0; text-shadow: 0 0 15px rgba(0, 242, 255, 0.3); }
+        .wall-section { margin-top: 15px; }
+        .wall-title { font-size: 13px; font-weight: bold; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        .wall-row { display: flex; justify-content: space-between; padding: 12px 10px; background: #0a0a0a; border-radius: 10px; margin-bottom: 5px; border: 1px solid #111; align-items: center; }
+        .vol-cash { color: var(--gold); font-weight: bold; font-family: monospace; font-size: 17px; }
+        .price-tag { font-family: monospace; font-size: 15px; }
+        .signal-bar { width: 100%; padding: 22px; border-radius: 12px; text-align: center; font-weight: 900; font-size: 22px; margin-top: 20px; border: 1px solid #333; letter-spacing: 2px; }
+        .bearish { background: rgba(255, 51, 51, 0.15); color: var(--red); border-color: var(--red); }
+        .bullish { background: rgba(0, 255, 102, 0.15); color: var(--green); border-color: var(--green); }
     </style>
 </head>
 <body onload="ignite()">
 
-    <div class="terminal-frame">
-        <div style="font-size: 10px; color: var(--gold); letter-spacing: 3px; text-align: center;">SYSTEM: BLACK-OPS GOLD RADAR</div>
-        <div class="price-display" id="price">$0.00</div>
-        <div class="pulse-indicator"><div id="pulse-bar"></div></div>
+    <div class="main-container">
+        <div class="price-val" id="price">$0.00</div>
 
-        <div id="trap-alert" class="trap-warning">⚠️ WARNING: LIQUIDITY TRAP DETECTED (SPOOFING)</div>
+        <div class="wall-section">
+            <div class="wall-title" style="color: var(--red);">● SELL WALLS (CASH)</div>
+            <div id="sell-walls"></div>
+        </div>
 
-        <div id="sell-zone"></div>
-        <div id="buy-zone"></div>
+        <div class="wall-section">
+            <div class="wall-title" style="color: var(--green);">● BUY WALLS (CASH)</div>
+            <div id="buy-walls"></div>
+        </div>
 
-        <div id="master-signal" class="signal-master">SCANNING...</div>
+        <div id="signal" class="signal-bar">INITIALIZING...</div>
     </div>
 
     <script>
-        let prevWalls = { asks: [], bids: [] };
-
         async function ignite() {
-            setInterval(updateSystem, 1500);
+            update();
+            setInterval(update, 2000);
         }
 
-        function formatVal(v) {
-            return v >= 1000000 ? (v/1000000).toFixed(2) + "M" : (v/1000).toFixed(0) + "K";
+        function formatMoney(v) {
+            if (v >= 1000000) return (v/1000000).toFixed(2) + "M";
+            return (v/1000).toFixed(0) + "K";
         }
 
-        async function updateSystem() {
+        async function update() {
             try {
-                const res = await fetch('https://api.binance.com/api/v3/depth?symbol=PAXGUSDT&limit=50');
+                const res = await fetch('https://api.binance.com/api/v3/depth?symbol=PAXGUSDT&limit=100');
                 const d = await res.json();
                 
-                const currentPrice = parseFloat(d.bids[0][0]);
-                document.getElementById('price').innerText = `$${currentPrice.toFixed(2)}`;
+                const p = parseFloat(d.bids[0][0]);
+                document.getElementById('price').innerText = `$${p.toFixed(2)}`;
 
-                // كاشف الفخاخ (Spoofing Detector)
-                if(prevWalls.asks.length > 0) {
-                    let oldBig = prevWalls.asks.find(a => parseFloat(a[1]) * currentPrice > 500000);
-                    let currentBig = d.asks.find(a => parseFloat(a[1]) * currentPrice > 500000);
-                    document.getElementById('trap-alert').style.display = (oldBig && !currentBig) ? 'block' : 'none';
-                }
-
-                // ميزان القوة
                 let bV = d.bids.reduce((a, b) => a + (parseFloat(b[0])*parseFloat(b[1])), 0);
                 let sV = d.asks.reduce((a, b) => a + (parseFloat(a[0])*parseFloat(a[1])), 0);
-                
-                const sig = document.getElementById('master-signal');
-                if(bV > sV) {
-                    sig.innerText = "🔱 ATTACK: BULLISH"; sig.className = "signal-master bullish-ops";
+
+                const sig = document.getElementById('signal');
+                if(sV > bV) {
+                    sig.innerText = "SIGNAL: BEARISH"; sig.className = "signal-bar bearish";
                 } else {
-                    sig.innerText = "🛑 DEFEND: BEARISH"; sig.className = "signal-master bearish-ops";
+                    sig.innerText = "SIGNAL: BULLISH"; sig.className = "signal-bar bullish";
                 }
 
-                // نبض السيولة
-                document.getElementById('pulse-bar').style.width = Math.min(100, (bV/sV)*50) + "%";
-
-                renderZone(d.asks.slice(0, 4), 'sell-zone', 'red');
-                renderZone(d.bids.slice(0, 4), 'buy-zone', 'green', true);
-                
-                prevWalls = { asks: d.asks, bids: d.bids };
+                render(d.asks, 'sell-walls', 'SELL', 'var(--red)');
+                render(d.bids, 'buy-walls', 'BUY', 'var(--green)');
             } catch(e) {}
         }
 
-        function renderZone(arr, id, color, isBuy) {
+        function render(arr, id, type, color) {
             const container = document.getElementById(id);
-            container.innerHTML = '';
-            arr.sort((a,b) => b[1]-a[1]).forEach(o => {
-                let cash = parseFloat(o[0]) * parseFloat(o[1]);
-                let div = document.createElement('div');
-                div.className = `wall-box ${isBuy?'buy-wall':''}`;
-                div.innerHTML = `
-                    <div class="row-data">
-                        <span style="color:var(--gold)">DEPTH LEVEL</span>
-                        <span>$${parseFloat(o[0]).toFixed(2)}</span>
-                    </div>
-                    <div class="row-data">
-                        <span style="font-weight:bold; color:var(--${color})">${isBuy?'BUY':'SELL'} VOLUME</span>
-                        <span style="font-size:16px;">$${formatVal(cash)}</span>
+            // تصفية الأوامر اللي تستاهل العرض (أكبر من 10 آلاف دولار) وفرزها حسب الأثقل
+            let top = arr.map(o => ({p: o[0], v: parseFloat(o[0])*parseFloat(o[1])}))
+                         .filter(o => o.v > 10000)
+                         .sort((a,b) => b.v - a.v)
+                         .slice(0, 4);
+
+            let html = '';
+            top.forEach(o => {
+                html += `
+                    <div class="wall-row">
+                        <span class="vol-cash">Vol: $${formatMoney(o.v)}</span>
+                        <span class="price-tag">$${parseFloat(o.p).toFixed(2)}</span>
+                        <span style="color:${color}; font-weight:bold;">${type}</span>
                     </div>
                 `;
-                container.appendChild(div);
             });
+            container.innerHTML = html || '<div style="text-align:center; color:#333;">بانتظار الحيتان...</div>';
         }
     </script>
 </body>
