@@ -3,21 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GOLD TERMINAL V4.0</title>
+    <title>GOLD TERMINAL V4.1 | سيزار</title>
     <style>
         :root { --gold: #ffd700; --bg: #030303; --card: #0a0a0a; --red: #ff4d4d; --green: #00ff88; }
         body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; padding: 10px; margin: 0; display: flex; flex-direction: column; align-items: center; }
         .main-container { width: 100%; max-width: 480px; border: 1px dashed #333; padding: 15px; border-radius: 20px; }
         .price-box { text-align: center; margin: 20px 0; }
         .price-val { font-size: 55px; color: #00f2ff; font-weight: 900; letter-spacing: -2px; }
-        .meter-container { background: #111; height: 35px; border-radius: 10px; margin: 20px 0; position: relative; overflow: hidden; display: flex; }
-        .meter-fill { height: 100%; transition: 1s ease-in-out; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; }
+        .meter-container { background: #111; height: 35px; border-radius: 10px; margin: 20px 0; overflow: hidden; display: flex; border: 1px solid #222; }
+        .meter-fill { height: 100%; transition: 1s ease-in-out; }
         .section-title { font-size: 14px; color: #777; margin: 20px 0 10px; text-align: center; border-bottom: 1px solid #222; padding-bottom: 5px; }
         .wall-row { display: flex; justify-content: space-between; padding: 12px 10px; background: var(--card); border-radius: 8px; margin-bottom: 8px; align-items: center; font-size: 14px; border: 1px solid #1a1a1a; }
-        .perc-tag { background: rgba(255, 215, 0, 0.1); color: var(--gold); padding: 2px 8px; border-radius: 15px; font-size: 11px; border: 1px solid var(--gold); }
-        .signal-btn { width: 100%; padding: 20px; border-radius: 15px; text-align: center; font-weight: 900; font-size: 20px; letter-spacing: 2px; margin-top: 20px; text-transform: uppercase; }
-        .bearish { background: rgba(255, 77, 77, 0.2); color: var(--red); border: 2px solid var(--red); }
-        .bullish { background: rgba(0, 255, 136, 0.2); color: var(--green); border: 2px solid var(--green); }
+        .perc-tag { background: rgba(255, 215, 0, 0.05); color: var(--gold); padding: 2px 8px; border-radius: 15px; font-size: 11px; border: 1px solid rgba(255, 215, 0, 0.3); }
+        .signal-btn { width: 100%; padding: 20px; border-radius: 15px; text-align: center; font-weight: 900; font-size: 20px; letter-spacing: 2px; margin-top: 20px; }
+        .bearish { background: rgba(255, 77, 77, 0.1); color: var(--red); border: 2px solid var(--red); }
+        .bullish { background: rgba(0, 255, 136, 0.1); color: var(--green); border: 2px solid var(--green); }
+        .money-val { color: var(--gold); font-weight: bold; font-family: monospace; font-size: 15px; }
     </style>
 </head>
 <body onload="launchTerminal()">
@@ -32,8 +33,8 @@
             <span style="color:var(--red)">بيع: <span id="sell-p">0</span>%</span>
         </div>
         <div class="meter-container">
-            <div id="buy-fill" class="meter-fill" style="background: linear-gradient(to right, #00331a, #00ff88); width: 50%;"></div>
-            <div id="sell-fill" class="meter-fill" style="background: linear-gradient(to left, #330000, #ff4d4d); width: 50%;"></div>
+            <div id="buy-fill" class="meter-fill" style="background: var(--green); width: 50%;"></div>
+            <div id="sell-fill" class="meter-fill" style="background: var(--red); width: 50%;"></div>
         </div>
 
         <div class="section-title" style="color:var(--red)">● SELL WALLS (ACTIVE)</div>
@@ -42,13 +43,21 @@
         <div class="section-title" style="color:var(--green)">● BUY WALLS (ACTIVE)</div>
         <div id="buy-walls"></div>
 
-        <div id="signal-box" class="signal-btn">WAITING FOR DATA...</div>
+        <div id="signal-box" class="signal-btn">ANALYZING...</div>
     </div>
 
     <script>
         async function launchTerminal() {
             updateRadar();
             setInterval(updateRadar, 2000);
+        }
+
+        function formatCash(cash) {
+            if (cash >= 1000000) {
+                return (cash / 1000000).toFixed(2) + "M";
+            } else {
+                return (cash / 1000).toFixed(0) + "K";
+            }
         }
 
         async function updateRadar() {
@@ -71,15 +80,13 @@
                 document.getElementById('buy-fill').style.width = bPerc + "%";
                 document.getElementById('sell-fill').style.width = sPerc + "%";
 
-                // تحديث الـ Signal
                 const sig = document.getElementById('signal-box');
                 if(sVol > bVol * 1.1) {
-                    sig.innerText = "SIGNAL: BEARISH ●"; sig.className = "signal-btn bearish";
+                    sig.innerText = "● SIGNAL: BEARISH"; sig.className = "signal-btn bearish";
                 } else {
-                    sig.innerText = "SIGNAL: BULLISH ●"; sig.className = "signal-btn bullish";
+                    sig.innerText = "● SIGNAL: BULLISH"; sig.className = "signal-btn bullish";
                 }
 
-                // دالة عرض الجدران
                 renderWalls(data.asks, 'sell-walls', 'SELL', 'var(--red)', sVol);
                 renderWalls(data.bids, 'buy-walls', 'BUY', 'var(--green)', bVol);
 
@@ -91,16 +98,14 @@
             let top = arr.sort((a, b) => b[1] - a[1]).slice(0, 3);
             let html = '';
             top.forEach(o => {
-                let cash = parseFloat(o[0]) * parseFloat(o[1]);
-                let weight = ((cash/totalSideVol) * 100).toFixed(2);
-                let val = cash >= 1000000 ? (cash/1000000).toFixed(2) + "M" : (cash/1000).toFixed(2) + "M"; 
-                // المليون بالذهب يظهر أحياناً كـ 1M أو كسور
+                let cashValue = parseFloat(o[0]) * parseFloat(o[1]);
+                let weight = ((cashValue/totalSideVol) * 100).toFixed(1);
                 html += `
                     <div class="wall-row">
                         <span style="color:${color}; font-weight:bold;">${type}</span>
                         <span style="font-family:monospace;">$${parseFloat(o[0]).toFixed(2)}</span>
                         <span class="perc-tag">${weight}%</span>
-                        <span style="color:var(--gold); font-weight:bold;">Vol: $${(cash/1000000).toFixed(2)}M</span>
+                        <span class="money-val">Vol: $${formatCash(cashValue)}</span>
                     </div>
                 `;
             });
