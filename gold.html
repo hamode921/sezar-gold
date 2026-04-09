@@ -3,63 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GOLD RADAR V2.1 | كاشف الأفخاخ</title>
+    <title>GOLD ALPHA V3.0 | السيولة العالمية</title>
     <style>
-        :root { --gold: #ffd700; --bg: #000; --red: #ff4d4d; --green: #00ff88; }
-        body { background: var(--bg); color: #fff; font-family: sans-serif; padding: 10px; margin: 0; display: flex; flex-direction: column; align-items: center; }
-        .sezar-box { border: 2px solid var(--gold); background: #080808; width: 95%; max-width: 450px; padding: 15px; border-radius: 15px; text-align: center; margin-bottom: 10px; }
-        .price { font-size: 40px; color: #00f2ff; font-weight: bold; }
-        .whale-card { background: #0a0a0a; width: 95%; max-width: 450px; border-radius: 10px; border: 1px solid #222; padding: 10px; box-sizing: border-box; }
-        .wall-row { display: flex; justify-content: space-between; padding: 8px 5px; border-bottom: 1px solid #111; font-size: 13px; }
-        .money-tag { color: var(--gold); font-weight: bold; font-family: monospace; }
+        :root { --gold: #ffd700; --bg: #030303; --neon: #00f2ff; --red: #ff4d4d; --green: #00ff88; }
+        body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; padding: 10px; margin: 0; display: flex; flex-direction: column; align-items: center; }
+        .alpha-frame { border: 2px solid var(--gold); background: linear-gradient(145deg, #0a0a0a, #000); width: 95%; max-width: 480px; padding: 25px; border-radius: 25px; text-align: center; box-shadow: 0 0 30px rgba(255,215,0,0.15); margin-bottom: 20px; }
+        .global-price { font-size: 52px; color: var(--neon); font-weight: 900; letter-spacing: -2px; margin: 5px 0; }
+        .whale-terminal { background: #080808; width: 95%; max-width: 480px; border-radius: 20px; border: 1px solid #1a1a1a; padding: 15px; box-sizing: border-box; overflow: hidden; }
+        .order-row { display: flex; justify-content: space-between; padding: 15px 10px; border-bottom: 1px solid #111; font-size: 16px; align-items: center; transition: 0.3s; }
+        .order-row:hover { background: #111; }
+        .big-money { color: var(--gold); font-weight: 800; font-family: 'Courier New', monospace; font-size: 20px; text-shadow: 0 0 10px rgba(255,215,0,0.3); }
+        .alert-pulse { font-size: 12px; color: var(--gold); animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
     </style>
 </head>
-<body onload="startSezarRadar()">
+<body onload="igniteRadar()">
 
-    <div class="sezar-box">
-        <h2 style="margin:0; font-size: 16px; color:var(--gold);">🔱 كاشف أوامر الذهب المعلقة (+20K) 🔱</h2>
-        <div class="price" id="p">0.00</div>
+    <div class="alpha-frame">
+        <div class="alert-pulse">● رادار السيولة العالمية مفعل</div>
+        <div class="global-price" id="main-p">0.00</div>
+        <div id="market-bias" style="font-size: 14px; font-weight: bold; margin-top: 10px;">جاري تحليل الضغط...</div>
     </div>
 
-    <div class="whale-card" id="walls-output">
-        <p style="text-align:center; color:#555;">جاري مسح أعماق السوق...</p>
+    <div class="whale-terminal">
+        <div style="text-align:center; color:#444; font-size:11px; margin-bottom:15px; letter-spacing: 1px;">أوامر الحيتان المصفاة (+50K)</div>
+        <div id="filtered-orders"></div>
     </div>
 
     <script>
-        async function startSezarRadar() {
-            updateData();
-            setInterval(updateData, 1500);
+        async function igniteRadar() {
+            updateAlpha();
+            setInterval(updateAlpha, 1500);
         }
 
-        async function updateData() {
+        async function updateAlpha() {
             try {
-                // سحب عمق 100 مستوى (أقصى شي ممكن)
+                // سحب بيانات عمق السوق من بايننس
                 const res = await fetch('https://api.binance.com/api/v3/depth?symbol=PAXGUSDT&limit=100');
-                const d = await res.json();
+                const data = await res.json();
                 
-                const currentPrice = parseFloat(d.bids[0][0]);
-                document.getElementById('p').innerText = `$${currentPrice.toFixed(2)}`;
+                const currentPrice = parseFloat(data.bids[0][0]);
+                document.getElementById('main-p').innerText = `$${currentPrice.toFixed(2)}`;
 
-                const out = document.getElementById('walls-output');
-                let html = '<div style="text-align:center; color:#444; font-size:10px; margin-bottom:5px;">الأوامر المعلقة البعيدة والقريبة</div>';
-                
-                // تصفية أوامر البيع (المقاومات) فوق 20 ألف دولار
-                const bigAsks = d.asks.filter(a => (parseFloat(a[0]) * parseFloat(a[1])) >= 20000).slice(0, 5);
-                bigAsks.forEach(a => {
-                    let cash = (parseFloat(a[0]) * parseFloat(a[1]));
-                    html += `<div class="wall-row"><span style="color:var(--red)">SELL LIMIT</span><span>$${parseFloat(a[0]).toFixed(2)}</span><span class="money-tag">$${(cash/1000).toFixed(0)}K</span></div>`;
+                // تحليل ذكي لضغط السوق
+                let bVol = data.bids.reduce((a, b) => a + parseFloat(b[1]), 0);
+                let aVol = data.asks.reduce((a, b) => a + parseFloat(b[1]), 0);
+                const bias = document.getElementById('market-bias');
+                if(bVol > aVol * 1.2) {
+                    bias.innerText = "🔱 ضغط شراء حيتان (صعود)"; bias.style.color = "var(--green)";
+                } else if(aVol > bVol * 1.2) {
+                    bias.innerText = "🛑 ضغط بيع حيتان (هبوط)"; bias.style.color = "var(--red)";
+                } else {
+                    bias.innerText = "⚖️ توازن سيولة (تذبذب)"; bias.style.color = "#888";
+                }
+
+                // تصفية الأوامر الضخمة فقط
+                const out = document.getElementById('filtered-orders');
+                let combined = [
+                    ...data.asks.map(a => ({p: a[0], v: parseFloat(a[0])*parseFloat(a[1]), t: 'SELL'})),
+                    ...data.bids.map(b => ({p: b[0], v: parseFloat(b[0])*parseFloat(b[1]), t: 'BUY'}))
+                ].filter(o => o.v >= 50000).sort((a, b) => b.v - a.v).slice(0, 6);
+
+                let html = '';
+                combined.forEach(o => {
+                    let formattedV = o.v >= 1000000 ? (o.v/1000000).toFixed(2) + "M" : (o.v/1000).toFixed(0) + "K";
+                    html += `
+                        <div class="order-row">
+                            <span style="color:${o.t==='BUY'?'var(--green)':'var(--red)'}; font-weight:bold;">${o.t}</span>
+                            <span style="font-family:monospace;">$${parseFloat(o.p).toFixed(2)}</span>
+                            <span class="big-money">$${formattedV}</span>
+                        </div>
+                    `;
                 });
-
-                html += `<div style="height:1px; background:#333; margin:8px 0;"></div>`;
-
-                // تصفية أوامر الشراء (الدعوم) فوق 20 ألف دولار
-                const bigBids = d.bids.filter(b => (parseFloat(b[0]) * parseFloat(b[1])) >= 20000).slice(0, 5);
-                bigBids.forEach(b => {
-                    let cash = (parseFloat(b[0]) * parseFloat(b[1]));
-                    html += `<div class="wall-row"><span style="color:var(--green)">BUY LIMIT</span><span>$${parseFloat(b[0]).toFixed(2)}</span><span class="money-tag">$${(cash/1000).toFixed(0)}K</span></div>`;
-                });
-
-                out.innerHTML = html;
+                out.innerHTML = html || '<p style="text-align:center; color:#333;">لا يوجد حيتان ثقيلة حالياً</p>';
             } catch (e) {}
         }
     </script>
