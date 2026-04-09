@@ -3,22 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GOLD RADAR V1.8 | سيزار</title>
+    <title>GOLD RADAR V1.9 | سيزار الكاش</title>
     <style>
         :root { --gold: #ffd700; --bg: #000; --neon: #00f2ff; --red: #ff4d4d; --green: #00ff88; }
         body { background: var(--bg); color: #fff; font-family: sans-serif; padding: 10px; margin: 0; display: flex; flex-direction: column; align-items: center; }
         .sezar-box { border: 2px solid var(--gold); background: #080808; width: 95%; max-width: 450px; padding: 20px; border-radius: 20px; text-align: center; margin-bottom: 15px; box-shadow: 0 0 20px rgba(255,215,0,0.2); }
         .price { font-size: 45px; color: var(--neon); font-weight: bold; margin: 10px 0; }
         .pressure-bar { width: 100%; height: 12px; background: #222; border-radius: 6px; margin: 15px 0; overflow: hidden; display: flex; border: 1px solid #333; }
-        .whale-card { background: #0a0a0a; width: 95%; max-width: 450px; border-radius: 15px; border: 1px solid #222; padding: 15px; box-sizing: border-box; min-height: 200px; }
-        .wall-row { display: flex; justify-content: space-between; padding: 12px 5px; border-bottom: 1px solid #111; font-size: 14px; }
-        .vol-tag { color: var(--gold); font-weight: bold; }
+        .whale-card { background: #0a0a0a; width: 95%; max-width: 450px; border-radius: 15px; border: 1px solid #222; padding: 15px; box-sizing: border-box; }
+        .wall-row { display: flex; justify-content: space-between; padding: 12px 5px; border-bottom: 1px solid #111; font-size: 14px; align-items: center; }
+        .money-tag { color: var(--gold); font-weight: bold; font-family: 'Courier New', Courier, monospace; font-size: 16px; }
     </style>
 </head>
 <body onload="startSezarRadar()">
 
     <div class="sezar-box">
-        <h2 style="margin:0; font-size: 18px; color:var(--gold);">🔱 رادار الذهب الاحترافي 🔱</h2>
+        <h2 style="margin:0; font-size: 18px; color:var(--gold);">🔱 رادار سيولة الذهب بالكاش 🔱</h2>
         <div class="price" id="p">0.00</div>
         <div class="pressure-bar">
             <div id="buy-bar" style="width: 50%; background: var(--green); transition: 0.8s;"></div>
@@ -27,56 +27,53 @@
     </div>
 
     <div class="whale-card" id="walls-output">
-        <p style="text-align:center; color:#555;">جاري سحب السيولة الحالية...</p>
+        <p style="text-align:center; color:#555;">جاري حساب أموال الحيتان...</p>
     </div>
 
     <script>
         async function startSezarRadar() {
             updateData();
-            setInterval(updateData, 2000); // تحديث كل ثانيتين لضمان استقرار الموبايل
+            setInterval(updateData, 2000);
         }
 
         async function updateData() {
             try {
-                // سحب بيانات العمق والسعر بطلب واحد مستقر
                 const res = await fetch('https://api.binance.com/api/v3/depth?symbol=PAXGUSDT&limit=20');
                 const d = await res.json();
-                
                 if(!d.bids) return;
 
-                // تحديث السعر
-                const currentPrice = parseFloat(d.bids[0][0]).toFixed(2);
-                document.getElementById('p').innerText = `$${currentPrice}`;
+                const currentPrice = parseFloat(d.bids[0][0]);
+                document.getElementById('p').innerText = `$${currentPrice.toFixed(2)}`;
 
-                // حساب ميزان السيولة
                 let bVol = d.bids.reduce((a, b) => a + parseFloat(b[1]), 0);
                 let aVol = d.asks.reduce((a, b) => a + parseFloat(b[1]), 0);
                 let total = bVol + aVol;
                 document.getElementById('buy-bar').style.width = (bVol/total * 100) + "%";
                 document.getElementById('sell-bar').style.width = (aVol/total * 100) + "%";
 
-                // عرض الجدران
                 const out = document.getElementById('walls-output');
-                let html = '<div style="text-align:center; color:var(--gold); font-size:12px; margin-bottom:10px;">📡 أضخم الأوامر في السوق</div>';
+                let html = '<div style="text-align:center; color:var(--gold); font-size:11px; margin-bottom:10px;">💰 مبالغ الحيتان المعروضة حالياً</div>';
                 
-                // جدران البيع
+                // جدران البيع مع تحويل الأونصة لفلوس
                 const topAsks = d.asks.sort((a, b) => b[1] - a[1]).slice(0, 3);
                 topAsks.forEach(a => {
-                    html += `<div class="wall-row"><span style="color:var(--red)">SELL</span><span>$${parseFloat(a[0]).toFixed(2)}</span><span class="vol-tag">${parseFloat(a[1]).toFixed(1)} Oz</span></div>`;
+                    let cash = (parseFloat(a[0]) * parseFloat(a[1]));
+                    let formattedCash = cash >= 1000000 ? (cash/1000000).toFixed(2) + "M" : (cash/1000).toFixed(1) + "K";
+                    html += `<div class="wall-row"><span style="color:var(--red)">SELL</span><span>$${parseFloat(a[0]).toFixed(2)}</span><span class="money-tag">$${formattedCash}</span></div>`;
                 });
 
                 html += `<div style="height:1px; background:#333; margin:10px 0;"></div>`;
 
-                // جدران الشراء
+                // جدران الشراء مع تحويل الأونصة لفلوس
                 const topBids = d.bids.sort((a, b) => b[1] - a[1]).slice(0, 3);
                 topBids.forEach(b => {
-                    html += `<div class="wall-row"><span style="color:var(--green)">BUY</span><span>$${parseFloat(b[0]).toFixed(2)}</span><span class="vol-tag">${parseFloat(b[1]).toFixed(1)} Oz</span></div>`;
+                    let cash = (parseFloat(b[0]) * parseFloat(b[1]));
+                    let formattedCash = cash >= 1000000 ? (cash/1000000).toFixed(2) + "M" : (cash/1000).toFixed(1) + "K";
+                    html += `<div class="wall-row"><span style="color:var(--green)">BUY</span><span>$${parseFloat(b[0]).toFixed(2)}</span><span class="money-tag">$${formattedCash}</span></div>`;
                 });
 
                 out.innerHTML = html;
-            } catch (e) {
-                console.log("Connection wait...");
-            }
+            } catch (e) {}
         }
     </script>
 </body>
