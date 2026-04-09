@@ -3,34 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GOLD HUNTER V1.3 | سيزار</title>
+    <title>GOLD RADAR V1.4 | سيزار</title>
     <style>
         :root { --gold: #ffd700; --bg: #000; --neon: #00f2ff; }
-        body { background: var(--bg); color: #fff; font-family: 'Courier New', monospace; padding: 10px; margin: 0; display: flex; flex-direction: column; align-items: center; }
-        .sezar-box { border: 2px solid var(--gold); background: #080808; width: 95%; max-width: 450px; padding: 20px; border-radius: 20px; text-align: center; box-shadow: 0 0 25px rgba(255,215,0,0.2); }
-        .price { font-size: 48px; color: var(--neon); font-weight: bold; margin: 10px 0; }
-        .status { font-size: 14px; color: var(--gold); border: 1px solid #333; padding: 5px 15px; border-radius: 50px; display: inline-block; }
-        #log { width: 95%; max-width: 450px; height: 120px; background: #050505; border: 1px solid #222; margin-top: 15px; padding: 10px; font-size: 11px; color: #555; overflow-y: auto; border-radius: 12px; text-align: left; }
+        body { background: var(--bg); color: #fff; font-family: 'Courier New', monospace; padding: 10px; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
+        .sezar-box { border: 2px solid var(--gold); background: #080808; width: 95%; max-width: 450px; padding: 25px; border-radius: 25px; text-align: center; box-shadow: 0 0 30px rgba(255,215,0,0.2); }
+        .price { font-size: 50px; color: var(--neon); font-weight: bold; margin: 15px 0; text-shadow: 0 0 15px var(--neon); }
+        .status { font-size: 13px; color: var(--gold); border: 1px solid #333; padding: 6px 18px; border-radius: 50px; display: inline-block; background: #111; }
+        #log { width: 95%; max-width: 450px; height: 100px; background: #050505; border: 1px solid #222; margin-top: 20px; padding: 10px; font-size: 10px; color: #555; overflow-y: auto; border-radius: 12px; text-align: left; }
     </style>
 </head>
 <body onload="powerOn()">
 
     <div class="sezar-box">
-        <h2 style="margin:0; font-size: 20px; color:var(--gold);">🔱 GOLD RADAR V1.3 🔱</h2>
-        <p style="font-size: 10px; opacity: 0.5;">سيزار.. نظام استعادة السيولة المباشر</p>
-        <div class="price" id="p">SCAN...</div>
-        <div class="status" id="s">ربط المحرك...</div>
+        <h2 style="margin:0; font-size: 22px; color:var(--gold);">🔱 GOLD RADAR V1.4 🔱</h2>
+        <p style="font-size: 11px; opacity: 0.6; color: #aaa;">نظام تتبع الذهب المباشر (PAXG/USDT)</p>
+        <div class="price" id="p">CONNECT..</div>
+        <div class="status" id="s">جاري الربط بنبض بايننس...</div>
     </div>
 
     <div id="log"></div>
 
     <script>
-        // استخدام "نبض بايننس المباشر" من الذاكرة
-        const socketURL = "wss://stream.binance.com:9443/ws/xauusdt@ticker";
+        // استخدام رمز PAXG لأنه البديل الرسمي للذهب في بايننس
+        const socketURL = "wss://stream.binance.com:9443/ws/paxgusdt@ticker";
         let ws;
 
         function powerOn() {
-            addLog("جاري تشغيل محرك التتبع الخاص بسيزار...");
+            addLog("سيزار.. جاري استدعاء بيانات الذهب من بايننس...");
             connect();
         }
 
@@ -38,33 +38,34 @@
             ws = new WebSocket(socketURL);
             
             ws.onopen = () => {
-                addLog("✅ تم الربط المباشر بأسطول بايننس!");
-                document.getElementById('s').innerText = "متصل بنبض الذهب";
+                addLog("✅ تم الاتصال بنجاح! الرادار يعمل الآن.");
+                document.getElementById('s').innerText = "متصل بالسيولة اللحظية";
             };
 
             ws.onmessage = (evt) => {
                 const data = JSON.parse(evt.data);
+                // جلب السعر الحالي
                 const price = parseFloat(data.c).toFixed(2);
                 document.getElementById('p').innerText = `$${price}`;
                 
-                // تحليل النبض (صعود أو هبوط)
-                const change = parseFloat(data.P);
-                if(change > 0) {
+                // تحليل نسبة التغيير اليومي
+                const change = parseFloat(data.P).toFixed(2);
+                if(change >= 0) {
                     document.getElementById('p').style.color = "#00ff88";
-                    document.getElementById('s').innerText = "🔥 صعود لحظي: " + change + "%";
+                    document.getElementById('s').innerText = "🔥 صعود: " + change + "%";
                 } else {
                     document.getElementById('p').style.color = "#ff4d4d";
-                    document.getElementById('s').innerText = "❄️ هبوط لحظي: " + change + "%";
+                    document.getElementById('s').innerText = "❄️ هبوط: " + change + "%";
                 }
             };
 
             ws.onerror = (e) => {
-                addLog("⚠️ خطأ في المحرك.. جاري إعادة التشغيل.");
+                addLog("⚠️ خطأ في الاتصال.. جاري المحاولة مرة أخرى.");
                 setTimeout(connect, 3000);
             };
 
             ws.onclose = () => {
-                addLog("🔌 انقطع الاتصال.. جاري الربط التلقائي.");
+                addLog("🔌 انقطع النبض.. جاري إعادة الربط التلقائي.");
                 setTimeout(connect, 3000);
             };
         }
