@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google" content="notranslate">
-    <title>GOLD TERMINAL V15</title>
+    <title>GOLD TERMINAL V15.1</title>
     <style>
         :root { --gold: #ffd700; --bg: #000; --red: #ff4d4d; --green: #00ff88; --neon: #00f2ff; }
         * { box-sizing: border-box; background-color: transparent !important; }
@@ -20,7 +20,7 @@
         .price-tag { font-family: monospace; font-size: 17px; font-weight: 500; margin-right: auto; }
         .badge { background: #1a1500; color: var(--gold); border: 1px solid #443300; padding: 2px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; margin: 0 15px; }
         .vol-tag { color: #fff; font-weight: bold; font-family: monospace; font-size: 17px; min-width: 90px; text-align: right; }
-        .signal-btn { width: 100%; padding: 22px; border-radius: 8px; text-align: center; font-weight: 900; font-size: 24px; margin-top: 30px; border: 2px solid #333; letter-spacing: 2px; }
+        .signal-btn { width: 100%; padding: 22px; border-radius: 8px; text-align: center; font-weight: 900; font-size: 24px; margin-top: 30px; border: 2px solid #333; letter-spacing: 2px; transition: 0.5s; }
         .bearish { background: rgba(255, 77, 77, 0.1) !important; color: var(--red); border-color: var(--red); }
         .bullish { background: rgba(0, 255, 136, 0.1) !important; color: var(--green); border-color: var(--green); }
     </style>
@@ -52,9 +52,11 @@
     </div>
 
 <script class="notranslate">
+let sigHistory = [];
+
 async function start() {
     update();
-    setInterval(update, 2000);
+    setInterval(update, 3000); // زيادة وقت التحديث لـ 3 ثواني للاستقرار
 }
 
 function formatM(cash) {
@@ -64,7 +66,7 @@ function formatM(cash) {
 
 async function update() {
     try {
-        const res = await fetch('https://api.binance.com/api/v3/depth?symbol=PAXGUSDT&limit=50');
+        const res = await fetch('https://api.binance.com/api/v3/depth?symbol=PAXGUSDT&limit=100');
         const d = await res.json();
         if(!d.bids) return;
 
@@ -84,13 +86,23 @@ async function update() {
             document.getElementById('bf').style.width = bP + '%';
             document.getElementById('sf').style.width = sP + '%';
 
+            // منطق الإشارة المستقر (يأخذ متوسط آخر 3 تحديثات)
+            let currentSig = bV > sV ? 1 : -1;
+            sigHistory.push(currentSig);
+            if(sigHistory.length > 3) sigHistory.shift();
+            
+            let avgSig = sigHistory.reduce((a,b) => a+b, 0);
             const sig = document.getElementById('sig');
-            if (bV > sV) {
+
+            if (avgSig >= 2) {
                 sig.innerText = "SIGNAL: BULLISH ●";
                 sig.className = "signal-btn bullish";
-            } else {
+            } else if (avgSig <= -2) {
                 sig.innerText = "SIGNAL: BEARISH ●";
                 sig.className = "signal-btn bearish";
+            } else {
+                sig.innerText = "SIGNAL: NEUTRAL ⏳";
+                sig.className = "signal-btn";
             }
         }
 
