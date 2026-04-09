@@ -1,26 +1,29 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
+<html lang="en" dir="ltr"> <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GOLD TERMINAL V11.0</title>
+    <title>GOLD TERMINAL V11.1 | سيزار</title>
     <style>
         :root { --gold: #ffd700; --bg: #000; --red: #ff4d4d; --green: #00ff88; --neon: #00f2ff; }
         * { box-sizing: border-box; background-color: transparent !important; color-scheme: dark; }
-        body { background: #000 !important; color: #fff !important; font-family: 'Segoe UI', sans-serif; padding: 15px; margin: 0; display: flex; flex-direction: column; align-items: center; }
+        body { background: #000 !important; color: #fff !important; font-family: 'Segoe UI', sans-serif; padding: 10px; margin: 0; display: flex; flex-direction: column; align-items: center; }
         .container { width: 100%; max-width: 480px; }
         
-        .price-card { text-align: center; border: 1px dashed #444; padding: 25px; border-radius: 10px; margin-bottom: 20px; }
-        .price-val { font-size: 55px; color: var(--neon); font-weight: 900; }
+        /* السعر الرئيسي بالوسط */
+        .price-card { text-align: center; border: 1px dashed #333; padding: 25px; border-radius: 10px; margin-bottom: 25px; }
+        .price-val { font-size: 58px; color: var(--neon); font-weight: 900; }
 
-        .ratio-bar { display: flex; justify-content: center; gap: 20px; font-size: 18px; font-weight: bold; margin-bottom: 10px; }
+        /* مسطرة قوة الاتجاه مع النسب باليسار */
+        .ratio-bar { display: flex; justify-content: flex-start; gap: 20px; font-size: 16px; font-weight: bold; margin-bottom: 10px; }
         .meter { height: 10px; background: #111; border-radius: 10px; overflow: hidden; display: flex; margin-bottom: 30px; border: 1px solid #222; }
         
-        .list-title { font-size: 15px; font-weight: bold; margin: 15px 0; display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
-        .row { display: flex; justify-content: space-between; align-items: center; padding: 15px 8px; border-bottom: 1px solid #111; }
-        .perc { background: #1a1500; color: var(--gold); border: 1px solid #443300; padding: 2px 10px; border-radius: 15px; font-size: 12px; font-weight: bold; }
-        .vol { color: #fff; font-weight: bold; font-family: monospace; font-size: 17px; }
+        /* الجدران */
+        .list-title { font-size: 16px; font-weight: bold; margin: 20px 0 10px; display: flex; align-items: center; justify-content: flex-start; gap: 10px; border-bottom: 1px solid #111; padding-bottom: 8px; }
+        .row { display: flex; justify-content: flex-start; align-items: center; padding: 14px 10px; border-bottom: 1px solid #111; gap: 15px; }
+        .perc { background: rgba(255, 215, 0, 0.1); color: var(--gold); border: 1px solid #443300; padding: 2px 10px; border-radius: 15px; font-size: 12px; font-weight: bold; }
+        .vol { color: #fff; font-weight: bold; font-family: monospace; font-size: 16px; margin-left: auto; /* دفع الـ Vol لليسار */ }
 
+        /* الإشارة النهائية */
         .sig-box { width: 100%; padding: 22px; border-radius: 10px; text-align: center; font-weight: 900; font-size: 24px; margin-top: 30px; border: 2px solid #333; }
         .bear { background: rgba(255, 77, 77, 0.1) !important; color: var(--red); border-color: var(--red); }
         .bull { background: rgba(0, 255, 136, 0.1) !important; color: var(--green); border-color: var(--green); }
@@ -29,7 +32,9 @@
 <body onload="start()">
 
     <div class="container">
-        <div class="price-card"><div class="price-val" id="price">$0.00</div></div>
+        <div class="price-card">
+            <div class="price-val" id="price">$0.00</div>
+        </div>
 
         <div class="ratio-bar">
             <span style="color:var(--green)">BUY: <span id="bp">50</span>%</span>
@@ -37,14 +42,14 @@
             <span style="color:var(--red)">SELL: <span id="sp">50</span>%</span>
         </div>
         <div class="meter">
-            <div id="bf" style="width: 50%; background: var(--green);"></div>
-            <div id="sf" style="width: 50%; background: var(--red);"></div>
+            <div id="bf" style="width: 50%; background: var(--green); transition: 1s;"></div>
+            <div id="sf" style="width: 50%; background: var(--red); transition: 1s;"></div>
         </div>
 
-        <div class="list-title" style="color:var(--red)">:SELL WALLS (30s) 🔴</div>
+        <div class="list-title" style="color:var(--red)">🔴 SELL WALLS (30s):</div>
         <div id="sl"></div>
 
-        <div class="list-title" style="color:var(--green)">:BUY WALLS (30s) 🟢</div>
+        <div class="list-title" style="color:var(--green)">🟢 BUY WALLS (30s):</div>
         <div id="bl"></div>
 
         <div id="sig" class="sig-box">SCANNING...</div>
@@ -64,7 +69,6 @@
                 const p = parseFloat(d.bids[0][0]);
                 document.getElementById('price').innerText = `$${p.toFixed(2)}`;
 
-                // حساب السيولة مع حماية من الـ NaN
                 let bV = 0, sV = 0;
                 d.bids.forEach(b => bV += (parseFloat(b[0]) * parseFloat(b[1])));
                 d.asks.forEach(a => sV += (parseFloat(a[0]) * parseFloat(a[1])));
@@ -80,9 +84,9 @@
 
                     const sig = document.getElementById('sig');
                     if(sV > bV) {
-                        sig.innerText = "SIGNAL: BEARISH ●"; sig.className = "sig-box bear";
+                        sig.innerText = "● SIGNAL: BEARISH"; sig.className = "sig-box bear";
                     } else {
-                        sig.innerText = "SIGNAL: BULLISH ●"; sig.className = "sig-box bull";
+                        sig.innerText = "● SIGNAL: BULLISH"; sig.className = "sig-box bull";
                     }
                 }
 
@@ -97,12 +101,11 @@
             let html = '';
             top.forEach(o => {
                 let cash = parseFloat(o[0]) * parseFloat(o[1]);
-                let weight = sideTotal > 0 ? ((cash/sideTotal)*100).toFixed(2) : "0.00";
-                let volStr = cash >= 1000000 ? (cash/1000000).toFixed(2) + "M" : (cash/1000).toFixed(1) + "M"; // خليناها دايماً تطلع M مثل البتكوين
+                let weight = sideTotal > 0 ? ((cash/sideTotal)*100).toFixed(1) : "0.0";
                 html += `
                     <div class="row">
                         <span style="font-size:20px;">${icon}</span>
-                        <span style="font-family:monospace;">$${parseFloat(o[0]).toFixed(1)}</span>
+                        <span style="font-family:monospace; font-size:16px;">$${parseFloat(o[0]).toFixed(1)}</span>
                         <span class="perc">${weight}%</span>
                         <span class="vol">Vol: ${ (cash/1000000).toFixed(2) }M</span>
                     </div>
