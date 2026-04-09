@@ -3,70 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GOLD TERMINAL V6.1</title>
+    <title>GOLD TERMINAL V7.0 | الهاكرز</title>
     <style>
+        /* أجبرنا المتصفح يكون أسود وما يضيف خلفية بيضاء */
         :root { --gold: #ffd700; --bg: #000; --red: #ff4d4d; --green: #00ff88; --neon: #00f2ff; }
-        body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; padding: 10px; margin: 0; display: flex; flex-direction: column; align-items: center; }
-        .main-container { width: 100%; max-width: 480px; padding: 15px; border-radius: 10px; background: #000; }
-        .price-box { text-align: center; margin-bottom: 25px; border: 1px dashed #333; padding: 25px; border-radius: 10px; }
-        .price-val { font-size: 58px; color: var(--neon); font-weight: 900; }
-        .trend-box { text-align: center; margin-bottom: 20px; }
-        .trend-title { font-size: 14px; color: #888; margin-bottom: 5px; }
-        .trend-perc { font-size: 28px; color: var(--gold); font-weight: bold; }
-        .meter-container { background: #111; height: 14px; border-radius: 20px; overflow: hidden; display: flex; border: 1px solid #222; margin: 15px 0; }
-        .ratio-text { display: flex; justify-content: center; gap: 20px; font-size: 15px; font-weight: bold; margin-bottom: 20px; }
-        .section-header { text-align: right; font-size: 16px; font-weight: bold; margin: 15px 0; display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
-        .wall-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 10px; background: #0a0a0a; border-radius: 8px; margin-bottom: 6px; border: 1px solid #1a1a1a; }
-        .perc-badge { background: rgba(255, 215, 0, 0.1); color: var(--gold); border: 1px solid #443300; padding: 2px 10px; border-radius: 15px; font-size: 12px; font-weight: bold; }
-        .vol-text { color: var(--gold); font-weight: bold; font-family: monospace; font-size: 16px; min-width: 80px; text-align: left; }
-        .signal-btn { width: 100%; padding: 22px; border-radius: 12px; text-align: center; font-weight: 900; font-size: 24px; margin-top: 25px; }
-        .bearish { background: rgba(255, 77, 77, 0.1); color: var(--red); border: 2px solid var(--red); }
-        .bullish { background: rgba(0, 255, 136, 0.1); color: var(--green); border: 2px solid var(--green); }
+        * { box-sizing: border-box; background-color: transparent !important; color-scheme: dark; }
+        
+        body { 
+            background: #000 !important; 
+            color: #fff !important; 
+            font-family: 'Consolas', monospace; 
+            padding: 10px; margin: 0; 
+            display: flex; flex-direction: column; align-items: center; 
+        }
+
+        .main-container { width: 100%; max-width: 480px; background: #000 !important; }
+
+        .price-val { font-size: 60px; color: var(--neon); font-weight: bold; text-align: center; margin: 10px 0; text-shadow: 0 0 10px rgba(0, 242, 255, 0.4); }
+
+        .meter-container { background: #111; height: 6px; border-radius: 10px; overflow: hidden; display: flex; border: 1px solid #333; margin: 15px 0; }
+        .meter-fill { height: 100%; transition: 1s ease-in-out; }
+
+        .section-header { text-align: right; font-size: 16px; font-weight: bold; margin: 15px 0; display: flex; align-items: center; justify-content: flex-end; gap: 8px; border-bottom: 1px solid #111; padding-bottom: 5px; }
+
+        .wall-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 10px; margin-bottom: 2px; }
+        
+        .perc-badge { color: var(--gold); font-weight: bold; font-size: 12px; margin-left: auto; margin-right: 15px; }
+        .vol-text { color: var(--gold); font-weight: bold; font-family: monospace; font-size: 16px; text-align: left; }
+        .wall-icon { font-size: 18px; }
+
+        .signal-btn { width: 100%; padding: 25px; border-radius: 10px; text-align: center; font-weight: 900; font-size: 26px; margin-top: 25px; border: 2px solid #333; text-transform: uppercase; }
+        .bearish { background: rgba(255, 77, 77, 0.1) !important; color: var(--red); border-color: var(--red); }
+        .bullish { background: rgba(0, 255, 136, 0.1) !important; color: var(--green); border-color: var(--green); }
     </style>
 </head>
-<body onload="ignite()">
+<body onload="igniteRadar()">
 
     <div class="main-container">
-        <div class="price-box">
-            <div class="price-val" id="price">$0.00</div>
+        <div class="price-val" id="price">$0.00</div>
+
+        <div class="meter-container">
+            <div id="buy-bar" class="meter-fill" style="background: var(--green); width: 50%;"></div>
+            <div id="sell-bar" class="meter-fill" style="background: var(--red); width: 50%;"></div>
         </div>
 
-        <div class="trend-box">
-            <div class="trend-title">TREND FORCE (قوة الاتجاه)</div>
-            <div class="trend-perc" id="trend-val">0%</div>
-            <div class="meter-container">
-                <div id="buy-bar" style="width: 50%; background: var(--green); transition: 1s;"></div>
-                <div id="sell-bar" style="width: 50%; background: var(--red); transition: 1s;"></div>
-            </div>
-        </div>
-
-        <div class="ratio-text">
-            <span style="color:var(--green)">%BUY: <span id="b-ratio">0</span></span>
-            <span>|</span>
-            <span style="color:var(--red)">%SELL: <span id="s-ratio">0</span></span>
-        </div>
-
-        <div class="section-header" style="color:var(--red)">SELL WALLS (30s) 🔴</div>
+        <div class="section-header" style="color:var(--red)">SELL WALLS (30s)🔴</div>
         <div id="sell-walls"></div>
 
-        <div class="section-header" style="color:var(--green)">BUY WALLS (30s) 🟢</div>
+        <div class="section-header" style="color:var(--green)">BUY WALLS (30s)🟢</div>
         <div id="buy-walls"></div>
 
-        <div id="signal" class="signal-btn">ANALYZING...</div>
+        <div id="master-signal" class="signal-btn bearish">ANALYZING...</div>
     </div>
 
     <script>
-        async function ignite() {
-            update();
-            setInterval(update, 2000);
+        async function igniteRadar() {
+            setInterval(updateSystem, 1500);
         }
 
-        function formatMoney(v) {
-            if (v >= 1000000) return (v / 1000000).toFixed(2) + "M";
-            return (v / 1000).toFixed(0) + "K";
+        function formatVal(v) {
+            return v >= 1000000 ? (v/1000000).toFixed(2) + "M" : (v/1000).toFixed(0) + "K";
         }
 
-        async function update() {
+        async function updateSystem() {
             try {
                 const res = await fetch('https://api.binance.com/api/v3/depth?symbol=PAXGUSDT&limit=100');
                 const d = await res.json();
@@ -74,50 +73,43 @@
                 const p = parseFloat(d.bids[0][0]);
                 document.getElementById('price').innerText = `$${p.toFixed(2)}`;
 
-                let bV = d.bids.reduce((a, b) => a + (parseFloat(b[0]) * parseFloat(b[1])), 0);
-                let sV = d.asks.reduce((a, b) => a + (parseFloat(a[0]) * parseFloat(a[1])), 0);
-                let total = bV + sV;
+                let bV = d.bids.reduce((a, b) => a + (parseFloat(b[0])*parseFloat(b[1])), 0);
+                let sV = d.asks.reduce((a, b) => a + (parseFloat(a[0])*parseFloat(a[1])), 0);
                 
-                if (total > 0) {
-                    let bP = (bV / total * 100).toFixed(1);
-                    let sP = (sV / total * 100).toFixed(1);
+                let bPerc = (bV/(bV+sV) * 100).toFixed(1);
+                let sPerc = (sV/(bV+sV) * 100).toFixed(1);
 
-                    document.getElementById('trend-val').innerText = bP + "%";
-                    document.getElementById('b-ratio').innerText = bP;
-                    document.getElementById('s-ratio').innerText = sP;
-                    document.getElementById('buy-bar').style.width = bP + "%";
-                    document.getElementById('sell-bar').style.width = sP + "%";
+                document.getElementById('buy-bar').style.width = bPerc + "%";
+                document.getElementById('sell-bar').style.width = sPerc + "%";
 
-                    const sig = document.getElementById('signal');
-                    if (sV > bV) {
-                        sig.innerText = "● SIGNAL: BEARISH"; sig.className = "signal-btn bearish";
-                    } else {
-                        sig.innerText = "● SIGNAL: BULLISH"; sig.className = "signal-btn bullish";
-                    }
+                const sig = document.getElementById('master-signal');
+                if(bV > sV) {
+                    sig.innerText = "SIGNAL: BULLISH ●"; sig.className = "signal-btn bullish";
+                } else {
+                    sig.innerText = "SIGNAL: BEARISH ●"; sig.className = "signal-btn bearish";
                 }
 
-                render(d.asks, 'sell-walls', '🎯', sV);
-                render(d.bids, 'buy-walls', '🛡️', bV);
-            } catch (e) { console.error(e); }
+                renderArea(d.asks.slice(0, 3), 'sell-walls', '🔴', sV);
+                renderArea(d.bids.slice(0, 3), 'buy-walls', '🟢', bV);
+                
+            } catch(e) {}
         }
 
-        function render(arr, id, icon, sideTotal) {
+        function renderArea(arr, id, icon, sideTotal) {
             const container = document.getElementById(id);
-            let top = arr.sort((a, b) => b[1] - a[1]).slice(0, 3);
-            let html = '';
-            top.forEach(o => {
+            container.innerHTML = '';
+            arr.sort((a,b) => b[1]-a[1]).forEach(o => {
                 let cash = parseFloat(o[0]) * parseFloat(o[1]);
-                let weight = sideTotal > 0 ? ((cash / sideTotal) * 100).toFixed(1) : 0;
-                html += `
-                    <div class="wall-row">
-                        <span style="font-family:monospace; font-size:16px;">$${parseFloat(o[0]).toFixed(2)}</span>
-                        <span class="perc-badge">${weight}%</span>
-                        <span class="vol-text">Vol: $${formatMoney(cash)}</span>
-                        <span style="font-size:20px;">${icon}</span>
-                    </div>
+                let div = document.createElement('div');
+                div.className = 'wall-row';
+                div.innerHTML = `
+                    <span class="wall-icon">${icon}</span>
+                    <span style="font-family:monospace; margin-left: 10px;">$${parseFloat(o[0]).toFixed(2)}</span>
+                    <span class="perc-badge">${((cash/sideTotal) * 100).toFixed(1)}%</span>
+                    <span class="vol-text">Vol: $${formatVal(cash)}</span>
                 `;
+                container.appendChild(div);
             });
-            container.innerHTML = html;
         }
     </script>
 </body>
