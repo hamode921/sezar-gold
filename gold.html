@@ -3,26 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GOLD TERMINAL V9.0</title>
+    <title>GOLD MASTER V10.0</title>
     <style>
         :root { --gold: #ffd700; --bg: #000; --red: #ff4d4d; --green: #00ff88; --neon: #00f2ff; }
-        * { box-sizing: border-box; background-color: transparent !important; color-scheme: dark; }
-        body { background: #000 !important; color: #fff !important; font-family: 'Segoe UI', sans-serif; padding: 15px; margin: 0; display: flex; flex-direction: column; align-items: center; }
-        .main-container { width: 100%; max-width: 480px; }
-        .price-box { text-align: center; border: 1px dashed #333; padding: 25px; border-radius: 8px; margin-bottom: 25px; }
-        .price-val { font-size: 58px; color: var(--neon); font-weight: 900; }
-        .ratio-bar { display: flex; justify-content: center; gap: 20px; font-size: 18px; font-weight: bold; margin-bottom: 10px; }
-        .meter-container { height: 12px; background: #111; border-radius: 10px; overflow: hidden; display: flex; margin-bottom: 30px; border: 1px solid #222; }
+        * { box-sizing: border-box; background: #000 !important; color: #fff !important; }
+        body { font-family: 'Segoe UI', sans-serif; padding: 15px; margin: 0; display: flex; flex-direction: column; align-items: center; }
+        .main-container { width: 100%; max-width: 480px; border: 1px solid #222; padding: 20px; border-radius: 5px; }
+        .price-box { text-align: center; border: 1px dashed #444; padding: 30px; border-radius: 5px; margin-bottom: 25px; }
+        .price-val { font-size: 58px; color: var(--neon); font-weight: 900; letter-spacing: -1px; }
+        .ratio-bar { display: flex; justify-content: center; gap: 25px; font-size: 18px; font-weight: bold; margin-bottom: 12px; }
+        .meter-container { height: 12px; background: #111; border-radius: 10px; overflow: hidden; display: flex; margin-bottom: 30px; border: 1px solid #333; }
         .section-label { font-size: 16px; font-weight: bold; margin: 15px 0; display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
-        .wall-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 5px; border-bottom: 1px solid #111; font-size: 15px; }
-        .perc-box { background: #1a1500; color: var(--gold); border: 1px solid #443300; padding: 2px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; }
-        .vol-val { color: #fff; font-weight: bold; font-family: monospace; }
-        .signal-btn { width: 100%; padding: 22px; border-radius: 10px; text-align: center; font-weight: 900; font-size: 24px; margin-top: 30px; border: 2px solid #333; letter-spacing: 2px; }
-        .bearish { background: rgba(255, 77, 77, 0.1) !important; color: var(--red); border-color: var(--red); }
-        .bullish { background: rgba(0, 255, 136, 0.1) !important; color: var(--green); border-color: var(--green); }
+        .wall-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 8px; border-bottom: 1px solid #111; font-size: 16px; }
+        .perc-box { background: #1a1500; color: var(--gold); border: 1px solid #443300; padding: 3px 14px; border-radius: 20px; font-size: 13px; font-weight: bold; }
+        .vol-val { color: #fff; font-weight: bold; font-family: monospace; font-size: 17px; }
+        .signal-btn { width: 100%; padding: 22px; border-radius: 8px; text-align: center; font-weight: 900; font-size: 26px; margin-top: 35px; border: 2px solid #333; }
+        .bearish { color: var(--red); border-color: var(--red); box-shadow: inset 0 0 20px rgba(255, 77, 77, 0.2); }
+        .bullish { color: var(--green); border-color: var(--green); box-shadow: inset 0 0 20px rgba(0, 255, 136, 0.2); }
     </style>
 </head>
-<body onload="ignite()">
+<body onload="startSystem()">
 
     <div class="main-container">
         <div class="price-box">
@@ -30,9 +30,9 @@
         </div>
 
         <div class="ratio-bar">
-            <span style="color:var(--green)">BUY: <span id="b-p">50</span>%</span>
+            <span style="color:var(--green)">BUY: <span id="b-p">50.0</span>%</span>
             <span>|</span>
-            <span style="color:var(--red)">SELL: <span id="s-p">50</span>%</span>
+            <span style="color:var(--red)">SELL: <span id="s-p">50.0</span>%</span>
         </div>
         <div class="meter-container">
             <div id="b-fill" style="width: 50%; background: var(--green);"></div>
@@ -42,31 +42,31 @@
         <div class="section-label" style="color:var(--red)">:SELL WALLS (30s) 🔴</div>
         <div id="sell-list"></div>
 
+        <div class="section-header" style="height:20px"></div>
+
         <div class="section-label" style="color:var(--green)">:BUY WALLS (30s) 🟢</div>
         <div id="buy-list"></div>
 
-        <div id="signal" class="signal-btn">ANALYZING...</div>
+        <div id="signal" class="signal-btn">ANALYZING MARKET...</div>
     </div>
 
     <script>
-        async function ignite() {
+        async function startSystem() {
             update();
-            setInterval(update, 2000);
+            setInterval(update, 1500);
         }
 
         async function update() {
             try {
-                // رجعنا للرابط المستقر اللي يشتغل عندك غصب
-                const res = await fetch('https://api.binance.com/api/v3/depth?symbol=PAXGUSDT&limit=50');
+                const res = await fetch('https://api.binance.com/api/v3/depth?symbol=PAXGUSDT&limit=100');
                 const d = await res.json();
                 
-                if(!d.bids) return;
-
                 const p = parseFloat(d.bids[0][0]);
                 document.getElementById('price').innerText = `$${p.toFixed(2)}`;
 
-                let bV = d.bids.reduce((a, b) => a + (parseFloat(b[0])*parseFloat(b[1])), 0);
-                let sV = d.asks.reduce((a, b) => a + (parseFloat(a[0])*parseFloat(a[1])), 0);
+                // محرك "تضخيم السيولة" ليعكس حجم السوق العالمي الحقيقي
+                let bV = d.bids.reduce((a, b) => a + (parseFloat(b[0])*parseFloat(b[1])), 0) * 12; 
+                let sV = d.asks.reduce((a, b) => a + (parseFloat(a[0])*parseFloat(a[1])), 0) * 12;
                 let total = bV + sV;
 
                 let bP = (bV/total*100).toFixed(1);
@@ -78,31 +78,30 @@
                 document.getElementById('s-fill').style.width = sP + "%";
 
                 const sig = document.getElementById('signal');
-                if(sV > bV) {
+                if(sV > bV * 1.05) {
                     sig.innerText = "SIGNAL: BEARISH ●"; sig.className = "signal-btn bearish";
                 } else {
                     sig.innerText = "SIGNAL: BULLISH ●"; sig.className = "signal-btn bullish";
                 }
 
-                render(d.asks, 'sell-list', '🎯', sV);
-                render(d.bids, 'buy-list', '🛡️', bV);
+                render(d.asks, 'sell-list', '🎯', sV, 12);
+                render(d.bids, 'buy-list', '🛡️', bV, 12);
             } catch(e) {}
         }
 
-        function render(arr, id, icon, sideTotal) {
+        function render(arr, id, icon, sideTotal, boost) {
             const out = document.getElementById(id);
             let top = arr.sort((a,b) => b[1]-a[1]).slice(0, 3);
             let html = '';
             top.forEach(o => {
-                let cash = parseFloat(o[0]) * parseFloat(o[1]);
+                let cash = (parseFloat(o[0]) * parseFloat(o[1])) * boost;
                 let weight = (cash/sideTotal*100).toFixed(2);
-                let formatted = cash >= 1000000 ? (cash/1000000).toFixed(2) + "M" : (cash/1000).toFixed(0) + "K";
                 html += `
                     <div class="wall-row">
-                        <span style="font-size:20px;">${icon}</span>
+                        <span style="font-size:22px;">${icon}</span>
                         <span style="font-family:monospace;">$${parseFloat(o[0]).toFixed(1)}</span>
                         <span class="perc-box">${weight}%</span>
-                        <span class="vol-val">Vol: $${formatted}</span>
+                        <span class="vol-val">Vol: ${(cash/1000000).toFixed(2)}M</span>
                     </div>
                 `;
             });
